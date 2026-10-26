@@ -1,4 +1,4 @@
-﻿# Interface WPF do NitroFPS. Os controles com x:Name no XAML ficam em $script:UI.
+﻿# Interface WPF do Overclutch. Os controles com x:Name no XAML ficam em $script:UI.
 
 $script:Pages = @('Home', 'Tweaks', 'Games', 'Tools', 'Log')
 $script:TweakRows = @{}

@@ -1,4 +1,4 @@
-# NitroFPS
+# Overclutch
 
 Otimizador de Windows para jogos: mais FPS e menos input lag em 1 clique, com **todas as alterações reversíveis**.
 
@@ -10,18 +10,18 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 - **20 otimizações** em 5 categorias (Sistema, Jogos, Latência e Input, Rede, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
 - **Boost por jogo:** detecta CS2, Valorant, LoL, Fortnite, Dota 2, Rocket League, Apex, PUBG, R6, GTA V e Roblox (ou qualquer `.exe` que você adicionar) e força a GPU dedicada + prioridade alta de CPU.
 - **Ferramentas:** limpar arquivos temporários, limpar o cache DNS, criar um ponto de restauração.
-- **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\NitroFPS\backup.json`, e cada ajuste volta exatamente ao que era.
+- **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\Overclutch\backup.json`, e cada ajuste volta exatamente ao que era.
 - **Modo simulação** (`Simular.bat`): mostra no Registro tudo o que seria alterado, sem mudar nada.
 
 ## Instalação
 
 ```powershell
-git clone https://github.com/SEU-USUARIO/nitrofps.git
-cd nitrofps
+git clone https://github.com/SEU-USUARIO/overclutch.git
+cd overclutch
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-Isso copia o app para `%LOCALAPPDATA%\Programs\NitroFPS` e cria atalhos na Área de Trabalho e no Menu Iniciar.
+Isso copia o app para `%LOCALAPPDATA%\Programs\Overclutch` e cria atalhos na Área de Trabalho e no Menu Iniciar.
 Também dá para abrir sem instalar, com um duplo clique em `Iniciar.bat`.
 
 Para desinstalar (use **Desfazer todas as otimizações** no app antes):
@@ -60,7 +60,7 @@ Para adicionar uma otimização nova, inclua um item em `src/Tweaks.ps1`. A apli
 ## Estrutura
 
 ```
-NitroFPS.ps1        ponto de entrada (pede administrador)
+Overclutch.ps1        ponto de entrada (pede administrador)
 Iniciar.bat         atalho para abrir
 Simular.bat         abre em modo simulação
 install.ps1         instala/desinstala
@@ -71,6 +71,25 @@ src/UI.ps1          lógica da interface
 src/MainWindow.xaml layout da interface (WPF)
 tests/Run-Tests.ps1 testes (não alteram o sistema)
 ```
+
+## Site de vendas
+
+A página fica em `site/index.html`. É uma página só, sem build, e as imagens ficam em `site/assets/`.
+Tudo o que muda com frequência está no bloco `CONFIG`, no fim do arquivo:
+
+- `checkout`: links de pagamento de cada plano (Kiwify, Hotmart, Mercado Pago, Stripe...)
+- `plans`: nomes, preços e benefícios
+- `benchmarks`: FPS antes/depois. **Coloque só medições reais.** Com a lista vazia, a seção fica escondida.
+- `testimonials`: depoimentos reais e autorizados. Com a lista vazia, a seção fica escondida.
+- `support`, `terms`, `privacy`: links do rodapé
+
+Para ver no seu PC:
+
+```powershell
+python -m http.server 8765 --directory site
+```
+
+Para publicar de graça: **GitHub Pages** (Settings → Pages → pasta `/site`), **Netlify** ou **Vercel**: basta arrastar a pasta `site`.
 
 ## Testes
 

@@ -1,8 +1,8 @@
-﻿# Núcleo do NitroFPS: log, backup e escrita rastreada no registro.
+﻿# Núcleo do Overclutch: log, backup e escrita rastreada no registro.
 # Toda alteração feita por um ajuste é gravada em backup.json ANTES de ser aplicada,
 # para que possa ser desfeita exatamente como estava.
 
-$script:AppName    = 'NitroFPS'
+$script:AppName    = 'Overclutch'
 $script:AppVersion = '1.0.0'
 
 $script:Core = @{
@@ -21,12 +21,26 @@ function Initialize-Core {
     )
     $script:Core.DataDir    = $DataDir
     $script:Core.BackupFile = Join-Path $DataDir 'backup.json'
-    $script:Core.LogFile    = Join-Path $DataDir 'nitrofps.log'
+    $script:Core.LogFile    = Join-Path $DataDir 'overclutch.log'
     $script:Core.DryRun     = [bool]$DryRun
     if (-not (Test-Path -LiteralPath $DataDir)) {
         New-Item -ItemType Directory -Path $DataDir -Force | Out-Null
+        if ($DataDir -eq (Join-Path $env:ProgramData $script:AppName)) { Import-LegacyData $DataDir }
     }
     $script:Core.Backup = Read-Backup
+}
+
+# O app se chamava NitroFPS: traz backup, jogos e log da pasta antiga para o
+# "Desfazer" continuar valendo para o que já foi aplicado.
+function Import-LegacyData {
+    param([string]$DataDir)
+    $legacy = Join-Path $env:ProgramData 'NitroFPS'
+    if (-not (Test-Path -LiteralPath (Join-Path $legacy 'backup.json'))) { return }
+    foreach ($pair in @(@('backup.json', 'backup.json'), @('games.json', 'games.json'), @('nitrofps.log', 'overclutch.log'))) {
+        $from = Join-Path $legacy $pair[0]
+        if (Test-Path -LiteralPath $from) { Copy-Item -LiteralPath $from -Destination (Join-Path $DataDir $pair[1]) -Force }
+    }
+    Write-Log "Dados migrados de $legacy (versão NitroFPS)."
 }
 
 function Test-DryRun { [bool]$script:Core.DryRun }

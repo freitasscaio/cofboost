@@ -1,6 +1,6 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="NitroFPS" Width="1120" Height="740" MinWidth="960" MinHeight="620"
+        Title="Overclutch" Width="1120" Height="740" MinWidth="960" MinHeight="620"
         WindowStartupLocation="CenterScreen" Background="#0B0D12" Foreground="#E7E9F0"
         FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
   <Window.Resources>
@@ -142,10 +142,10 @@
       <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="26,28,20,26" Orientation="Horizontal">
           <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource AccentGradient}">
-            <TextBlock Text="N" FontSize="20" FontWeight="Black" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <TextBlock Text="OC" FontSize="15" FontWeight="Black" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
           <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-            <TextBlock Text="NitroFPS" FontSize="18" FontWeight="Bold" Foreground="White"/>
+            <TextBlock Text="Overclutch" FontSize="18" FontWeight="Bold" Foreground="White"/>
             <TextBlock x:Name="VersionText" Text="v1.0.0" FontSize="11" Foreground="{StaticResource Muted}"/>
           </StackPanel>
         </StackPanel>
@@ -192,7 +192,7 @@
                   <Button x:Name="BtnBoost" Style="{StaticResource PrimaryButton}" Height="58" FontSize="17" Content="⚡  OTIMIZAR AGORA"/>
                   <Button x:Name="BtnUndoAll" Style="{StaticResource SecondaryButton}" Margin="0,10,0,0" Content="Desfazer todas as otimizações"/>
                   <TextBlock Foreground="{StaticResource Muted}" FontSize="11" Margin="0,14,0,0" TextWrapping="Wrap"
-                             Text="Antes de aplicar, o NitroFPS cria um ponto de restauração do Windows e salva os valores originais."/>
+                             Text="Antes de aplicar, o Overclutch cria um ponto de restauração do Windows e salva os valores originais."/>
                 </StackPanel>
               </Border>
               <Border Style="{StaticResource CardStyle}" Grid.Column="2">
@@ -299,7 +299,7 @@
               </Border>
               <Border Style="{StaticResource CardStyle}" Margin="9,0,0,18">
                 <StackPanel>
-                  <TextBlock Text="Dados do NitroFPS" FontWeight="Bold" Foreground="White" FontSize="15"/>
+                  <TextBlock Text="Dados do Overclutch" FontWeight="Bold" Foreground="White" FontSize="15"/>
                   <TextBlock Text="Pasta com o backup dos valores originais, lista de jogos e registro de atividades." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
                   <Button x:Name="BtnOpenData" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Abrir pasta"/>
                 </StackPanel>
@@ -312,7 +312,7 @@
         <DockPanel x:Name="PageLog" Visibility="Collapsed">
           <StackPanel DockPanel.Dock="Top">
             <TextBlock Style="{StaticResource H1}" Text="Registro de atividades"/>
-            <TextBlock Style="{StaticResource Sub}" Text="Tudo o que o NitroFPS alterou nesta sessão."/>
+            <TextBlock Style="{StaticResource Sub}" Text="Tudo o que o Overclutch alterou nesta sessão."/>
           </StackPanel>
           <TextBox x:Name="LogBox" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Background="#0F1219" Foreground="#C9CEDB"
                    BorderBrush="#232838" Padding="12" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>

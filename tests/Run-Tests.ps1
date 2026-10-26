@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
-    Testes do NitroFPS. Não alteram o sistema: os ajustes rodam em modo simulação e o
-    teste de backup/reversão usa apenas a chave de teste HKCU:\Software\NitroFPS-Test (apagada no fim).
+    Testes do Overclutch. Não alteram o sistema: os ajustes rodam em modo simulação e o
+    teste de backup/reversão usa apenas a chave de teste HKCU:\Software\Overclutch-Test (apagada no fim).
     Uso: powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-Tests.ps1
 #>
 $ErrorActionPreference = 'Stop'
@@ -28,7 +28,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 . (Join-Path $root 'src\Tweaks.ps1')
 . (Join-Path $root 'src\Games.ps1')
 
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ("nitrofps-test-" + [guid]::NewGuid())
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-test-" + [guid]::NewGuid())
 
 Write-Host 'Catálogo de otimizações'
 $ids = $script:Tweaks | ForEach-Object { $_.Id }
@@ -55,7 +55,7 @@ Assert (-not (Test-Path (Join-Path $tmp 'backup.json'))) 'Nenhum backup gravado 
 Write-Host 'Backup e reversão reais (chave de teste)'
 Remove-Item -Path $tmp -Recurse -Force
 Initialize-Core -DataDir $tmp
-$key = 'HKCU:\Software\NitroFPS-Test'
+$key = 'HKCU:\Software\Overclutch-Test'
 Set-RegValueRaw $key 'Existente' 5 'DWord'
 Set-RegValueRaw $key 'Texto' 'original' 'String'
 $fake = @{
@@ -81,7 +81,7 @@ Assert ((Get-RegValue $key 'Texto').Value -eq 'original') 'Valor String original
 Assert (-not (Get-RegValue $key 'Novo')) 'Valor que não existia foi removido'
 Assert (-not (Get-RegValue "$key\Sub" 'Valor')) 'Valor em subchave nova foi removido'
 Assert (@(Get-BackupEntries 'teste').Count -eq 0) 'Backup limpo após reverter'
-[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('Software\NitroFPS-Test', $false)
+[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('Software\Overclutch-Test', $false)
 
 Write-Host 'Limpeza de temporários (pasta falsa)'
 $fakeTemp = Join-Path $tmp 'temp'

@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-    Instala o NitroFPS em %LOCALAPPDATA%\Programs\NitroFPS e cria atalhos na Área de Trabalho e no Menu Iniciar.
+    Instala o Overclutch em %LOCALAPPDATA%\Programs\Overclutch e cria atalhos na Área de Trabalho e no Menu Iniciar.
     Uso: powershell -ExecutionPolicy Bypass -File install.ps1 [-Uninstall]
 #>
 param([switch]$Uninstall)
 
-$appName   = 'NitroFPS'
+$appName   = 'Overclutch'
 $target    = Join-Path $env:LOCALAPPDATA "Programs\$appName"
 $shortcuts = @(
     (Join-Path ([Environment]::GetFolderPath('Desktop')) "$appName.lnk"),
@@ -20,7 +20,7 @@ if ($Uninstall) {
 }
 
 New-Item -ItemType Directory -Path (Join-Path $target 'src') -Force | Out-Null
-Copy-Item -Path (Join-Path $PSScriptRoot 'NitroFPS.ps1'), (Join-Path $PSScriptRoot 'Iniciar.bat'), (Join-Path $PSScriptRoot 'Simular.bat') -Destination $target -Force
+Copy-Item -Path (Join-Path $PSScriptRoot 'Overclutch.ps1'), (Join-Path $PSScriptRoot 'Iniciar.bat'), (Join-Path $PSScriptRoot 'Simular.bat') -Destination $target -Force
 Copy-Item -Path (Join-Path $PSScriptRoot 'src\*') -Destination (Join-Path $target 'src') -Recurse -Force
 Get-ChildItem -LiteralPath $target -Recurse -File | Unblock-File
 
@@ -28,11 +28,19 @@ $shell = New-Object -ComObject WScript.Shell
 foreach ($s in $shortcuts) {
     $lnk = $shell.CreateShortcut($s)
     $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-    $lnk.Arguments = "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File `"$target\NitroFPS.ps1`""
+    $lnk.Arguments = "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File `"$target\Overclutch.ps1`""
     $lnk.WorkingDirectory = $target
     $lnk.IconLocation = Join-Path $env:SystemRoot 'System32\powercpl.dll,0'
-    $lnk.Description = 'NitroFPS - otimizador para jogos'
+    $lnk.Description = 'Overclutch - otimizador para jogos'
     $lnk.Save()
+}
+
+# Remove a instalação da época em que o app se chamava NitroFPS (os dados em ProgramData são migrados pelo app).
+$legacy = Join-Path $env:LOCALAPPDATA 'Programs\NitroFPS'
+if (Test-Path -LiteralPath $legacy) {
+    Remove-Item -LiteralPath $legacy -Recurse -Force -ErrorAction SilentlyContinue
+    foreach ($s in $shortcuts) { Remove-Item -LiteralPath ($s -replace "$appName\.lnk$", 'NitroFPS.lnk') -Force -ErrorAction SilentlyContinue }
+    Write-Host 'Versão antiga (NitroFPS) removida.'
 }
 
 Write-Host "$appName instalado em $target"

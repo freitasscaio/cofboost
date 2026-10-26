@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    NitroFPS - otimizador de Windows para jogos.
+    Overclutch - otimizador de Windows para jogos.
 .PARAMETER DryRun
     Modo simulação: mostra no registro o que seria alterado, sem mudar nada no PC.
 #>
@@ -18,7 +18,7 @@ if (-not $isAdmin -and -not $DryRun) {
     try {
         Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -Verb RunAs | Out-Null
     } catch {
-        [System.Windows.MessageBox]::Show('O NitroFPS precisa de permissão de administrador para otimizar o Windows.', 'NitroFPS', 'OK', 'Warning') | Out-Null
+        [System.Windows.MessageBox]::Show('O Overclutch precisa de permissão de administrador para otimizar o Windows.', 'Overclutch', 'OK', 'Warning') | Out-Null
     }
     exit
 }
@@ -34,5 +34,5 @@ try {
     Start-App
 } catch {
     Write-Log "Erro fatal: $($_.Exception.Message)`n$($_.ScriptStackTrace)" 'ERROR'
-    [System.Windows.MessageBox]::Show("Erro ao iniciar o NitroFPS:`n$($_.Exception.Message)", 'NitroFPS', 'OK', 'Error') | Out-Null
+    [System.Windows.MessageBox]::Show("Erro ao iniciar o Overclutch:`n$($_.Exception.Message)", 'Overclutch', 'OK', 'Error') | Out-Null
 }
