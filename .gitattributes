@@ -1,0 +1,4 @@
+# Mantém CRLF nos scripts do Windows e não deixa o Git mexer no BOM.
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.xaml text eol=crlf
