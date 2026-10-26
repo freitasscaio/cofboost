@@ -21,20 +21,15 @@ function Get-ActiveSchemeGuid {
     $null
 }
 
+# Só placas físicas conectadas: adaptadores virtuais (Hyper-V, VPN, Tailscale) não
+# importam para o ping do jogo, e o "Default Switch" do Hyper-V muda de GUID a cada boot.
 function Get-ActiveTcpInterfaces {
-    $hive, $sub = Split-RegPath $script:TcpIfaces
-    $key = $hive.OpenSubKey($sub)
-    if (-not $key) { return }
-    try {
-        foreach ($n in $key.GetSubKeyNames()) {
-            $k = $key.OpenSubKey($n)
-            if (-not $k) { continue }
-            $dhcp   = $k.GetValue('DhcpIPAddress')
-            $static = @($k.GetValue('IPAddress')) | Where-Object { $_ -and $_ -ne '0.0.0.0' }
-            $k.Close()
-            if (($dhcp -and $dhcp -ne '0.0.0.0') -or $static) { "$($script:TcpIfaces)\$n" }
-        }
-    } finally { $key.Close() }
+    foreach ($a in Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }) {
+        $path = "$($script:TcpIfaces)\$($a.InterfaceGuid.ToLower())"
+        $hive, $sub = Split-RegPath $path
+        $key = $hive.OpenSubKey($sub)
+        if ($key) { $key.Close(); $path }
+    }
 }
 
 $script:Tweaks = @(
