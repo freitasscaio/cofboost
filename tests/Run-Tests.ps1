@@ -83,6 +83,37 @@ Assert (-not (Get-RegValue "$key\Sub" 'Valor')) 'Valor em subchave nova foi remo
 Assert (@(Get-BackupEntries 'teste').Count -eq 0) 'Backup limpo após reverter'
 [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('Software\NitroFPS-Test', $false)
 
+Write-Host 'Limpeza de temporários (pasta falsa)'
+$fakeTemp = Join-Path $tmp 'temp'
+$outside  = Join-Path $tmp 'fora'
+New-Item -ItemType Directory -Path "$fakeTemp\a\b", $outside -Force | Out-Null
+Set-Content "$fakeTemp\solto.txt" 'x'
+Set-Content "$fakeTemp\a\b\fundo.txt" 'x'
+Set-Content "$fakeTemp\a\somente-leitura.txt" 'x'; (Get-Item "$fakeTemp\a\somente-leitura.txt").IsReadOnly = $true
+Set-Content "$fakeTemp\a\em-uso.txt" 'x'
+Set-Content "$outside\importante.txt" 'nao apagar'
+cmd /c mklink /J "$fakeTemp\juncao" "$outside" | Out-Null
+$lock = [IO.File]::Open("$fakeTemp\a\em-uso.txt", 'Open', 'Read', 'None')
+try {
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    $r = Clear-TempFiles -Paths @($fakeTemp)
+    Assert ($sw.Elapsed.TotalSeconds -lt 10) "Limpeza terminou sem travar ($([int]$sw.Elapsed.TotalMilliseconds) ms)"
+} finally { $lock.Close() }
+Assert ($r.Files -eq 3 -and $r.Skipped -eq 1) "3 apagados, 1 em uso mantido (apagou $($r.Files), manteve $($r.Skipped))"
+Assert (Test-Path "$fakeTemp\a\em-uso.txt") 'Arquivo em uso continua lá'
+Assert (-not (Test-Path "$fakeTemp\a\b")) 'Subpasta vazia removida'
+Assert (Test-Path "$outside\importante.txt") 'Junção NÃO foi seguida (arquivo fora do TEMP intacto)'
+cmd /c rmdir "$fakeTemp\juncao" | Out-Null
+
+Write-Host 'Execução em segundo plano'
+. (Join-Path $root 'src\UI.ps1')
+function Set-Status { param($Text) }   # sem janela nos testes
+New-Item -ItemType Directory -Path "$fakeTemp\c" -Force | Out-Null
+1..5 | ForEach-Object { Set-Content "$fakeTemp\c\$_.tmp" 'x' }
+$script:Core.DryRun = $false
+$bg = Invoke-InBackground 'teste' "param(`$p) Clear-TempFiles -Paths @('$fakeTemp') -Progress `$p"
+Assert ($bg.Files -eq 6) "Limpeza em segundo plano retornou resultado ($($bg.Files) arquivos)"
+
 Write-Host 'Jogos'
 Initialize-Core -DataDir $tmp -DryRun
 $found = @(Find-InstalledGames)

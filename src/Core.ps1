@@ -222,25 +222,46 @@ function New-RestorePoint {
     }
 }
 
+# Usa .NET direto em vez de Remove-Item: o Remove-Item pede confirmação ao apagar pasta
+# que ainda tem arquivo em uso, e com o console escondido isso travava o app para sempre.
 function Clear-TempFiles {
-    $freed = [long]0
-    foreach ($dir in @($env:TEMP, (Join-Path $env:SystemRoot 'Temp'))) {
+    param(
+        [string[]]$Paths = @($env:TEMP, (Join-Path $env:SystemRoot 'Temp')),
+        [hashtable]$Progress = @{}
+    )
+    $freed = [long]0; $files = 0; $skipped = 0
+    foreach ($dir in $Paths) {
         # Proteção: nunca limpar raiz de disco ou caminho vazio.
-        if (-not $dir -or $dir.Length -le 3 -or -not (Test-Path -LiteralPath $dir)) { continue }
-        foreach ($f in Get-ChildItem -LiteralPath $dir -Recurse -Force -File -ErrorAction SilentlyContinue) {
-            if (Test-DryRun) { $freed += $f.Length; continue }
-            try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop; $freed += $f.Length } catch { }
+        if (-not $dir -or $dir.Length -le 3 -or -not [IO.Directory]::Exists($dir)) { continue }
+        $stack = New-Object System.Collections.Stack
+        $subdirs = New-Object System.Collections.Generic.List[string]
+        $stack.Push($dir)
+        while ($stack.Count) {
+            $cur = $stack.Pop()
+            try { $entries = (New-Object IO.DirectoryInfo $cur).GetFileSystemInfos() } catch { continue }
+            foreach ($e in $entries) {
+                # Nunca entra em atalhos/junções: poderiam apontar para fora da pasta TEMP.
+                if ($e.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                if ($e -is [IO.DirectoryInfo]) { $stack.Push($e.FullName); $subdirs.Add($e.FullName); continue }
+                $len = $e.Length
+                if (Test-DryRun) { $freed += $len; $files++ }
+                else {
+                    try {
+                        if ($e.IsReadOnly) { $e.IsReadOnly = $false }
+                        $e.Delete(); $freed += $len; $files++
+                    } catch { $skipped++ }
+                }
+                $Progress.Files = $files
+            }
         }
         if (-not (Test-DryRun)) {
-            Get-ChildItem -LiteralPath $dir -Recurse -Force -Directory -ErrorAction SilentlyContinue |
-                Sort-Object { $_.FullName.Length } -Descending |
-                ForEach-Object { try { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop } catch { } }
+            # Subpastas da mais funda para a mais rasa; pasta com arquivo em uso simplesmente fica.
+            for ($i = $subdirs.Count - 1; $i -ge 0; $i--) {
+                try { [IO.Directory]::Delete($subdirs[$i], $false) } catch { }
+            }
         }
     }
-    $mb = [math]::Round($freed / 1MB, 1)
-    $prefix = if (Test-DryRun) { '[SIMULAÇÃO] ' } else { '' }
-    Write-Log "${prefix}Arquivos temporários: $mb MB liberados."
-    $mb
+    [pscustomobject]@{ MB = [math]::Round($freed / 1MB, 1); Files = $files; Skipped = $skipped }
 }
 
 function Clear-Dns {

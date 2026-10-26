@@ -14,6 +14,43 @@ function Update-UI {
 
 function Set-Status { param([string]$Text) $script:UI.StatusText.Text = $Text; Update-UI }
 
+$script:CoreFile = Join-Path $PSScriptRoot 'Core.ps1'
+
+# Roda $Body (texto de script que recebe $Progress) em outra thread com o Core carregado,
+# mantendo a janela respondendo. Retorna o último objeto que o script emitir.
+function Invoke-InBackground {
+    param([string]$Message, [string]$Body)
+    $progress = [hashtable]::Synchronized(@{})
+    $wrapper = {
+        param($CoreFile, $DataDir, $DryRun, $Body, $Progress)
+        . $CoreFile
+        Initialize-Core -DataDir $DataDir -DryRun:$DryRun
+        & ([scriptblock]::Create($Body)) $Progress
+    }
+    $ps = [PowerShell]::Create()
+    try {
+        [void]$ps.AddScript($wrapper.ToString()).AddArgument($script:CoreFile).AddArgument($script:Core.DataDir).
+            AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($progress)
+        $handle = $ps.BeginInvoke()
+        while (-not $handle.IsCompleted) {
+            $text = $Message
+            if ($progress.ContainsKey('Files')) { $text += " ($($progress.Files) arquivos)" }
+            Set-Status "$text..."
+            Start-Sleep -Milliseconds 80
+        }
+        $result = $ps.EndInvoke($handle)
+        if ($ps.Streams.Error.Count) { throw $ps.Streams.Error[0].Exception }
+        $result | Select-Object -Last 1
+    } finally { $ps.Dispose() }
+}
+
+function Invoke-RestorePointInBackground {
+    $ok = Invoke-InBackground 'Criando ponto de restauração (pode levar alguns minutos)' 'param($p) New-RestorePoint'
+    if ($ok) { Write-Log 'Ponto de restauração criado.' }
+    else { Write-Log 'Não foi possível criar o ponto de restauração (o Windows permite só um a cada 24h).' 'WARN' }
+    [bool]$ok
+}
+
 function Show-Message {
     param([string]$Text, [string]$Icon = 'Information', [string]$Buttons = 'OK')
     [System.Windows.MessageBox]::Show($script:Window, $Text, $script:AppName, $Buttons, $Icon)
@@ -258,7 +295,7 @@ function Register-Handlers {
                $(if ($script:Games.Count) { " + boost em $($script:Games.Count) jogo(s)" } else { '' }) + ".`n`nContinuar?"
         if ((Show-Message $msg 'Question' 'YesNo') -ne 'Yes') { return }
         Invoke-Busy 'Criando ponto de restauração...' {
-            if (-not (New-RestorePoint)) {
+            if (-not (Invoke-RestorePointInBackground)) {
                 Write-Log 'Seguindo sem ponto de restauração (o backup interno continua valendo).' 'WARN'
             }
             $reboot = Invoke-TweakList $list
@@ -332,8 +369,10 @@ function Register-Handlers {
 
     $script:UI.BtnCleanTemp.Add_Click({
         Invoke-Busy 'Limpando arquivos temporários...' {
-            $mb = Clear-TempFiles
-            Show-Message "$mb MB liberados." | Out-Null
+            $r = Invoke-InBackground 'Limpando arquivos temporários' 'param($p) Clear-TempFiles -Progress $p'
+            $prefix = if (Test-DryRun) { '[SIMULAÇÃO] ' } else { '' }
+            Write-Log "${prefix}Temporários: $($r.Files) arquivos apagados ($($r.MB) MB), $($r.Skipped) em uso foram mantidos."
+            Show-Message "$($r.MB) MB liberados ($($r.Files) arquivos).`n$($r.Skipped) arquivo(s) em uso por outros programas foram mantidos." | Out-Null
         }
     })
 
@@ -341,7 +380,7 @@ function Register-Handlers {
 
     $script:UI.BtnRestorePoint.Add_Click({
         Invoke-Busy 'Criando ponto de restauração (pode levar alguns minutos)...' {
-            if (New-RestorePoint) { Show-Message 'Ponto de restauração criado.' | Out-Null }
+            if (Invoke-RestorePointInBackground) { Show-Message 'Ponto de restauração criado.' | Out-Null }
             else { Show-Message 'Não foi possível criar o ponto (o Windows permite só um a cada 24h). Veja o Registro.' 'Warning' | Out-Null }
         }
     })
