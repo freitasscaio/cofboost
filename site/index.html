@@ -4,210 +4,257 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Overclutch: otimizador de Windows para jogos, grátis e open source</title>
-<meta name="description" content="Overclutch ajusta o Windows para jogos em um clique: menos travadas, menos input lag e tudo reversível. Grátis e de código aberto.">
+<meta name="description" content="Overclutch ajusta o Windows para jogos em um clique: menos travadas, menos input lag, limpeza do sistema e tudo reversível. Grátis e de código aberto.">
 <meta property="og:title" content="Overclutch">
 <meta property="og:description" content="Otimizador de Windows para jogos. Grátis, open source e 100% reversível.">
-<meta property="og:image" content="assets/app-home.png">
+<meta property="og:image" content="assets/app-home.jpg">
+<meta name="theme-color" content="#0D1220">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --carbon: #0e1424;
-    --carbon-2: #111a2d;
-    --panel: #141b2e;
-    --line: #24304a;
+    --bg: #0d1220;
+    --bg-2: #0a0f1b;
+    --panel: #131a2b;
+    --panel-2: #182036;
+    --line: #1f2940;
     --ink: #e6ebf5;
-    --muted: #8e9ab3;
+    --muted: #8c97ae;
     --violet: #8b5cf6;
     --violet-hi: #a78bfa;
     --stable: #5bf0b0;
     --stutter: #ff6b6b;
-    --chamfer: 14px;
-    --max: 1160px;
+    --amber: #f5b14c;
+    --blue: #60a5fa;
+    --pink: #f472b6;
+    --radius: 16px;
+    --max: 1440px;
+    --gutter: clamp(20px, 4vw, 64px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    background: var(--carbon);
+    background: var(--bg);
     color: var(--ink);
-    font: 17px/1.65 "IBM Plex Sans", system-ui, sans-serif;
+    font: 16px/1.65 Poppins, system-ui, sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
   img { max-width: 100%; height: auto; display: block; }
   a { color: inherit; }
-  :focus-visible { outline: 2px solid var(--violet-hi); outline-offset: 3px; }
-  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
-  h1, h2, h3 { font-family: Oxanium, sans-serif; font-weight: 600; line-height: 1.08; text-wrap: balance; }
-  h2 { font-size: clamp(30px, 3.6vw, 44px); letter-spacing: -0.01em; }
-  h3 { font-size: 20px; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--violet-hi); outline-offset: 3px; border-radius: 6px; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+  h1, h2, h3 { line-height: 1.12; font-weight: 600; text-wrap: balance; }
+  h2 { font-size: clamp(28px, 3.2vw, 44px); letter-spacing: -0.015em; }
+  h3 { font-size: 18px; }
   p { text-wrap: pretty; }
   .muted { color: var(--muted); }
+  section { padding: clamp(64px, 8vw, 112px) 0; }
+  .section-head { display: flex; justify-content: space-between; align-items: end; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .section-head p { color: var(--muted); max-width: 34em; }
 
-  /* Motivo visual: cantos chanfrados, como num painel de HUD */
-  .chamfer {
-    clip-path: polygon(var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer));
-  }
-
+  /* Botões */
   .btn {
-    --chamfer: 10px;
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 15px 26px; font: 600 16px "IBM Plex Sans", sans-serif; text-decoration: none;
-    border: 0; cursor: pointer; transition: background-color .15s, color .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 15.5px; text-decoration: none;
+    border: 1px solid transparent; cursor: pointer; transition: background-color .15s, border-color .15s, transform .15s;
   }
   .btn svg { width: 18px; height: 18px; flex: none; }
-  .btn-main { background: var(--violet); color: #fff; }
-  .btn-main:hover { background: #9d74ff; }
-  .btn-alt { background: #1c2540; color: var(--ink); }
-  .btn-alt:hover { background: #253154; }
+  .btn-main { background: var(--violet); color: #fff; box-shadow: 0 10px 30px -12px rgba(139, 92, 246, .8); }
+  .btn-main:hover { background: #9b74f8; transform: translateY(-1px); }
+  .btn-alt { background: var(--panel); border-color: var(--line); }
+  .btn-alt:hover { background: var(--panel-2); }
 
   /* Cabeçalho */
-  header { position: sticky; top: 0; z-index: 20; background: rgba(14, 20, 36, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-  .nav { display: flex; align-items: center; gap: 32px; height: 68px; }
-  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 700 20px Oxanium, sans-serif; }
-  .brand img { width: 30px; height: 30px; }
-  .nav-links { display: flex; gap: 28px; margin-left: auto; font-size: 15px; }
-  .nav-links a { text-decoration: none; color: var(--muted); }
-  .nav-links a:hover { color: var(--ink); }
-  .nav .btn { padding: 10px 18px; font-size: 15px; }
-  .menu-btn { display: none; margin-left: auto; background: none; border: 0; color: var(--ink); cursor: pointer; padding: 8px; }
+  header { position: sticky; top: 0; z-index: 30; background: rgba(13, 18, 32, .82); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .nav { display: flex; align-items: center; gap: 28px; height: 72px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 19px; }
+  .brand img { width: 32px; height: 32px; border-radius: 9px; }
+  .nav-links { display: flex; gap: 6px; margin-left: auto; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 14.5px; padding: 8px 14px; border-radius: 999px; transition: background-color .15s, color .15s; }
+  .nav-links a:hover { color: var(--ink); background: var(--panel); }
+  .nav .btn { padding: 10px 18px; font-size: 14.5px; }
+  .menu-btn { display: none; margin-left: auto; background: none; border: 0; cursor: pointer; padding: 8px; }
   .menu-btn svg { width: 24px; height: 24px; display: block; }
 
   /* Hero */
-  .hero { padding: 72px 0 88px; }
-  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
-  .hero h1 { font-size: clamp(40px, 4.9vw, 62px); letter-spacing: -0.02em; }
-  .hero .lead { margin: 22px 0 32px; font-size: 19px; color: var(--muted); max-width: 32em; }
-  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .hero-note { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .hero { padding: clamp(40px, 6vw, 80px) 0 clamp(48px, 6vw, 88px); position: relative; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 720px; z-index: -1; pointer-events: none;
+    background: radial-gradient(900px 480px at 78% 10%, rgba(139, 92, 246, .22), transparent 70%);
+  }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 4vw, 72px); align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+  .pill b { background: rgba(91, 240, 176, .14); color: var(--stable); padding: 2px 9px; border-radius: 999px; font-weight: 600; font-size: 12.5px; }
+  .hero h1 { font-size: clamp(40px, 5vw, 68px); letter-spacing: -0.025em; margin: 22px 0 20px; }
+  .hero h1 span { color: var(--violet-hi); }
+  .hero .lead { font-size: clamp(16.5px, 1.4vw, 19px); color: var(--muted); max-width: 32em; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .hero-note { margin-top: 16px; font-size: 13.5px; color: var(--muted); }
 
-  /* Painel do gráfico de frametime */
-  .hud {
-    position: relative; background: var(--panel); padding: 22px 22px 18px;
+  /* Vitrine do app */
+  .showcase { perspective: 1800px; }
+  .frame {
+    border-radius: 18px; padding: 8px; background: linear-gradient(160deg, #2a2457, #151b2f 45%, #11182a);
+    border: 1px solid #2b2f55; box-shadow: 0 40px 100px -30px rgba(139, 92, 246, .45), 0 20px 40px -20px rgba(0, 0, 0, .6);
+    transform: rotateY(-6deg) rotateX(3deg); transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2, .7, .2, 1);
   }
-  .hud::before {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background-image: linear-gradient(rgba(142, 154, 179, .07) 1px, transparent 1px);
-    background-size: 100% 4px;
+  .frame img { border-radius: 12px; transition: opacity .25s ease; }
+  .frame img.swap { opacity: 0; }
+  .tabs { display: flex; gap: 6px; margin-top: 18px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: none; background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+    padding: 8px 16px; border-radius: 999px; font-size: 13.5px; cursor: pointer; transition: background-color .15s, color .15s, border-color .15s;
   }
-  .hud-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--muted); margin-bottom: 10px; }
-  .hud-top b { font: 600 15px Oxanium, sans-serif; color: var(--ink); }
-  .hud svg.graph { width: 100%; height: auto; display: block; overflow: visible; }
-  .graph .axis { stroke: var(--line); stroke-width: 1; }
-  .graph .axis-label { fill: var(--muted); font: 11px "IBM Plex Sans", sans-serif; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: rgba(139, 92, 246, .18); border-color: rgba(139, 92, 246, .6); color: #fff; }
+
+  /* Fatos */
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .fact { padding: 28px 30px; border-left: 1px solid var(--line); }
+  .fact:first-child { border-left: 0; }
+  .fact b { display: block; font-size: clamp(30px, 3vw, 40px); font-weight: 700; line-height: 1.1; }
+  .fact span { color: var(--muted); font-size: 14.5px; }
+
+  /* Cartões de recursos */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; transition: border-color .2s; }
+  .card:hover { border-color: #2e3a5c; }
+  .icon { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 20px; }
+  .icon svg { width: 22px; height: 22px; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 15px; }
+
+  /* Gráfico de frametime */
+  .split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
+  .split p { color: var(--muted); margin-top: 16px; max-width: 32em; }
+  .hud { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 24px 20px; }
+  .hud-top { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+  .hud-top b { color: var(--ink); font-weight: 600; }
+  .graph { width: 100%; height: auto; display: block; }
+  .graph .axis { stroke: var(--line); }
+  .graph .axis-label { fill: var(--muted); font: 11px Poppins, sans-serif; }
   .graph .before { fill: none; stroke: var(--stutter); stroke-width: 2; stroke-linejoin: round; }
   .graph .after { fill: none; stroke: var(--stable); stroke-width: 2.2; stroke-linejoin: round; }
   .graph .scan { stroke: var(--violet-hi); stroke-width: 1.5; }
-  .graph .scan-glow { fill: url(#scanGlow); }
-  .legend { display: flex; gap: 22px; margin-top: 12px; font-size: 14px; color: var(--muted); }
-  .legend span { display: inline-flex; align-items: center; gap: 8px; }
-  .legend i { width: 18px; height: 3px; display: inline-block; }
-  .hud-caption { margin-top: 10px; font-size: 13px; color: #6b7690; }
+  .legend { display: flex; gap: 22px; margin-top: 10px; font-size: 13.5px; color: var(--muted); flex-wrap: wrap; }
+  .legend i { width: 16px; height: 3px; display: inline-block; vertical-align: middle; margin-right: 8px; border-radius: 2px; }
+  .replay { background: none; border: 0; color: var(--violet-hi); font-size: 13.5px; cursor: pointer; margin-left: auto; }
 
-  /* Seções */
-  section { padding: 96px 0; border-top: 1px solid var(--line); }
-  .split { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: start; }
-  .split-head { position: sticky; top: 100px; }
-  .split-head p { margin-top: 16px; color: var(--muted); max-width: 26em; }
+  /* Lista de otimizações com filtro */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .chip { background: var(--panel); border: 1px solid var(--line); color: var(--muted); padding: 7px 15px; border-radius: 999px; font-size: 13.5px; cursor: pointer; transition: all .15s; }
+  .chip:hover { color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+  .tweaks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .tweak { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; animation: fade .25s ease; }
+  .tweak-top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+  .tweak b { font-weight: 600; font-size: 15px; }
+  .tweak p { color: var(--muted); font-size: 13.5px; margin-top: 6px; }
+  .tweak small { color: var(--muted); font-size: 12px; display: block; margin-top: 10px; }
+  .tag { flex: none; font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 7px; }
+  .tag.rec { background: rgba(91, 240, 176, .12); color: var(--stable); }
+  .tag.opt { background: #1a2236; color: var(--muted); }
+  .tag.alto { background: rgba(255, 107, 107, .14); color: var(--stutter); }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-  /* Lista real de otimizações */
-  .tweak-group + .tweak-group { margin-top: 36px; }
-  .tweak-group h3 { font-size: 15px; color: var(--violet-hi); font-weight: 600; margin-bottom: 6px; }
-  .tweak { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .tweak b { font-weight: 600; }
-  .tweak p { grid-column: 1; color: var(--muted); font-size: 15px; }
-  .tweak .state { grid-row: 1; grid-column: 2; font-size: 13px; color: var(--stable); white-space: nowrap; align-self: center; }
-  .tweak .state.opt { color: var(--muted); }
-    
-  /* Vitrine do app */
-  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--panel); margin: 28px 0 22px; --chamfer: 8px; }
-  .tab { --chamfer: 6px; background: none; border: 0; color: var(--muted); font: 500 15px "IBM Plex Sans", sans-serif; padding: 9px 18px; cursor: pointer; }
-  .tab[aria-selected="true"] { background: var(--violet); color: #fff; }
-  .shot { position: relative; background: var(--line); padding: 1px; }
-  .shot img { transition: opacity .25s ease; }
-  .shot img.swap { opacity: 0; }
+  /* Limpeza e restauração */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .duo .card { padding: 32px; }
+  .duo ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; }
+  .duo li { display: flex; gap: 12px; align-items: start; color: var(--muted); font-size: 15px; }
+  .duo li svg { width: 18px; height: 18px; flex: none; margin-top: 3px; stroke: var(--stable); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .duo li b { color: var(--ink); font-weight: 500; }
+
+  /* Comparativo */
+  .compare { border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; background: var(--panel); }
+  .compare table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 640px; }
+  .compare th, .compare td { padding: 16px 22px; text-align: center; border-bottom: 1px solid var(--line); }
+  .compare th:first-child, .compare td:first-child { text-align: left; }
+  .compare thead th { font-size: 13.5px; color: var(--muted); font-weight: 500; background: var(--bg-2); }
+  .compare thead th.us { color: #fff; background: rgba(139, 92, 246, .16); }
+  .compare td.us { background: rgba(139, 92, 246, .06); }
+  .compare tr:last-child td { border-bottom: 0; }
+  .yes { color: var(--stable); font-weight: 700; }
+  .no { color: #5d6883; }
+  .meh { color: var(--amber); font-size: 13.5px; }
 
   /* Instalação */
-  .steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; counter-reset: s; position: relative; }
-  .steps::before { content: ""; position: absolute; top: 19px; left: 20px; right: 20px; height: 1px; background: var(--line); }
-  .steps li { counter-increment: s; position: relative; padding-right: 32px; }
-  .steps li::before {
-    content: counter(s); position: relative; display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 20px;
-    background: #241d45; color: var(--violet-hi); font: 600 18px Oxanium, sans-serif;
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  }
+  .steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: s; }
+  .steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: rgba(139, 92, 246, .16); color: var(--violet-hi); font-weight: 700; margin-bottom: 18px; }
   .steps h3 { margin-bottom: 8px; }
-  .steps p { color: var(--muted); font-size: 16px; }
-  .notice { margin-top: 44px; padding: 20px 24px; background: var(--panel); box-shadow: inset 3px 0 0 var(--violet); font-size: 15px; color: var(--muted); max-width: 760px; }
-  .notice b { color: var(--ink); }
-
-  /* Segurança */
-  .facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 44px; }
-  .fact { padding: 4px 32px; border-left: 1px solid var(--line); }
-  .fact:first-child { padding-left: 0; border-left: 0; }
-  .fact svg { width: 26px; height: 26px; stroke: var(--stable); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 16px; }
-  .fact h3 { margin-bottom: 8px; }
-  .fact p { color: var(--muted); font-size: 16px; }
-
-  /* Open source */
-  .oss { background: var(--panel); padding: 56px; --chamfer: 22px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
-  .oss p { margin-top: 16px; color: var(--muted); }
-  .oss-actions { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
-  .oss-actions .btn { justify-content: center; }
+  .steps p { color: var(--muted); font-size: 15px; }
+  .notice { margin-top: 20px; padding: 18px 22px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); font-size: 14.5px; }
+  .notice b { color: var(--ink); font-weight: 600; }
 
   /* FAQ */
-  .faq { max-width: 780px; }
-  .faq details { border-bottom: 1px solid var(--line); }
-  .faq summary { list-style: none; cursor: pointer; padding: 20px 0; font-weight: 600; display: flex; justify-content: space-between; gap: 20px; }
+  .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; align-items: start; }
+  .faq details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0 22px; transition: border-color .2s; }
+  .faq details[open] { border-color: rgba(139, 92, 246, .5); }
+  .faq summary { list-style: none; cursor: pointer; padding: 18px 0; font-weight: 500; display: flex; justify-content: space-between; gap: 16px; }
   .faq summary::-webkit-details-marker { display: none; }
-  .faq summary svg { width: 20px; height: 20px; flex: none; stroke: var(--violet-hi); fill: none; stroke-width: 2; transition: transform .2s ease; margin-top: 3px; }
+  .faq summary svg { width: 20px; height: 20px; flex: none; stroke: var(--violet-hi); fill: none; stroke-width: 2; transition: transform .2s; margin-top: 2px; }
   .faq details[open] summary svg { transform: rotate(45deg); }
-  .faq details p { color: var(--muted); padding-bottom: 22px; max-width: 40em; }
+  .faq details p { color: var(--muted); font-size: 15px; padding-bottom: 20px; }
 
-  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; color: var(--muted); font-size: 14px; }
-  .foot { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-  .foot nav { display: flex; gap: 22px; flex-wrap: wrap; }
-  .foot a { text-decoration: none; }
-  .foot a:hover { color: var(--ink); }
+  /* CTA final e rodapé */
+  .final {
+    border-radius: 24px; padding: clamp(40px, 6vw, 72px); display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center;
+    background: radial-gradient(700px 300px at 0% 0%, rgba(139, 92, 246, .3), transparent 70%), var(--panel); border: 1px solid #2b2f55;
+  }
+  .final p { color: var(--muted); margin-top: 12px; max-width: 34em; }
+  footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .foot nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .foot nav a { text-decoration: none; padding: 6px 12px; border-radius: 8px; }
+  .foot nav a:hover { color: var(--ink); background: var(--panel); }
+  .social { display: flex; gap: 6px; }
+  .social a { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--panel); border: 1px solid var(--line); }
+  .social a:hover { border-color: #2e3a5c; color: var(--ink); }
+  .social svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  [hidden] { display: none !important; }
 
-  /* Animação de abertura (só no hero) */
-  .intro { opacity: 0; transform: translateY(10px); animation: intro .6s ease forwards; }
-  .intro-2 { animation-delay: .08s; }
-  .intro-3 { animation-delay: .16s; }
-  @keyframes intro { to { opacity: 1; transform: none; } }
+  /* Entrada do topo (só uma vez, ao abrir) */
+  .intro { animation: intro .6s ease both; }
+  .intro-2 { animation-delay: .08s; } .intro-3 { animation-delay: .16s; } .intro-4 { animation-delay: .24s; }
+  @keyframes intro { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .intro { opacity: 1; transform: none; animation: none; }
-    .shot img, .faq summary svg { transition: none; }
+    .intro, .tweak { animation: none; }
+    .frame { transform: none !important; transition: none; }
+    .frame img, .faq summary svg { transition: none; }
   }
 
-  @media (max-width: 960px) {
-    .hero-grid, .split, .oss { grid-template-columns: 1fr; }
-    .split { gap: 32px; }
-    .split-head { position: static; }
+  /* Tablet */
+  @media (max-width: 1080px) {
+    .hero-grid, .split { grid-template-columns: minmax(0, 1fr); }   /* minmax: as abas roláveis não alargam a coluna */
+    .frame { transform: none; }
+    .cards, .tweaks { grid-template-columns: 1fr 1fr; }
+    .facts { grid-template-columns: 1fr 1fr; }
+    .fact:nth-child(3) { border-left: 0; }
+    .fact:nth-child(n + 3) { border-top: 1px solid var(--line); }
+    .final { grid-template-columns: 1fr; }
+  }
+  /* Celular */
+  @media (max-width: 760px) {
+    body { font-size: 15.5px; }
     .nav-links {
-      display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0; margin: 0;
-      background: var(--carbon-2); border-bottom: 1px solid var(--line); padding: 6px 24px 14px;
+      display: none; position: absolute; top: 72px; left: 0; right: 0; flex-direction: column; gap: 2px; margin: 0;
+      background: var(--bg-2); border-bottom: 1px solid var(--line); padding: 10px var(--gutter) 16px;
     }
     .nav-links.open { display: flex; }
-    .nav-links a { padding: 12px 0; }
+    .nav-links a { padding: 12px 10px; }
     .menu-btn { display: block; }
-    .nav .btn { display: none; }
-  }
-  @media (max-width: 720px) {
-    body { font-size: 16px; }
-    section { padding: 72px 0; }
-    .hero { padding: 48px 0 64px; }
-    .steps, .facts { grid-template-columns: 1fr; gap: 32px; }
-    .steps::before { display: none; }
-    .steps li { padding-right: 0; }
-    .fact { padding: 0; border-left: 0; }
-    .oss { padding: 32px 24px; }
-    .hero-actions .btn { width: 100%; justify-content: center; }
-    .tabs { display: flex; }
-    .tab { flex: 1; padding: 9px 6px; }
+    .nav > .btn { display: none; }
+    .cards, .tweaks, .duo, .steps, .faq { grid-template-columns: minmax(0, 1fr); }
+    .fact { padding: 20px; }
+    .hero-actions .btn { flex: 1 1 100%; }
+    .section-head { margin-bottom: 28px; }
   }
 </style>
 </head>
@@ -215,14 +262,15 @@
 
 <header>
   <div class="wrap nav">
-    <a href="#" class="brand"><img src="assets/favicon.png" alt="" width="30" height="30">Overclutch</a>
+    <a href="#" class="brand"><img src="assets/favicon.png" alt="" width="32" height="32">Overclutch</a>
     <nav class="nav-links" id="nav-links" aria-label="Seções">
-      <a href="#o-que-muda">O que muda</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#otimizacoes">Otimizações</a>
       <a href="#instalar">Instalar</a>
       <a href="#faq">Dúvidas</a>
       <a class="js-repo" href="#">GitHub</a>
     </nav>
-    <a class="btn btn-main chamfer js-download" href="#">Baixar grátis</a>
+    <a class="btn btn-main js-download" href="#">Baixar grátis</a>
     <button class="menu-btn" id="menu-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav-links">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -230,36 +278,76 @@
 </header>
 
 <main>
-  <section class="hero" style="border-top: 0">
+  <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <h1 class="intro">Frames estáveis. Mira onde você quer.</h1>
-        <p class="lead intro intro-2">O Overclutch ajusta o Windows para jogos com um clique: menos travadas, menos input lag e nada que não dê para desfazer.</p>
-        <div class="hero-actions intro intro-3">
-          <a class="btn btn-main chamfer js-download" href="#">
+        <span class="pill intro"><b id="version-pill">v1</b>Grátis e de código aberto</span>
+        <h1 class="intro intro-2">Seu PC no modo <span>clutch</span>, em um clique.</h1>
+        <p class="lead intro intro-3">O Overclutch ajusta o Windows para jogos: menos travadas, menos input lag e um sistema limpo. Antes de mudar qualquer coisa ele guarda o original, então tudo pode ser desfeito.</p>
+        <div class="hero-actions intro intro-4">
+          <a class="btn btn-main js-download" href="#">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
             Baixar grátis para Windows
           </a>
-          <a class="btn btn-alt chamfer js-repo" href="#">Ver o código</a>
+          <a class="btn btn-alt" href="#recursos">Ver o que ele faz</a>
         </div>
-        <p class="hero-note intro intro-3">Windows 10 e 11, 64 bits. Código aberto sob licença MIT.</p>
+        <p class="hero-note intro intro-4">Windows 10 e 11, 64 bits. Cerca de 2 MB.</p>
       </div>
+      <div class="showcase intro intro-3">
+        <div class="frame" id="frame"><img id="shot" src="assets/app-home.jpg" alt="Painel do Overclutch" width="1600" height="1031"></div>
+        <div class="tabs" role="tablist" aria-label="Telas do app" id="tabs"></div>
+      </div>
+    </div>
+  </section>
 
-      <figure class="hud chamfer" aria-label="Gráfico ilustrativo de frametime antes e depois da otimização">
+  <div class="wrap">
+    <div class="facts" id="facts"></div>
+  </div>
+
+  <section id="recursos">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Feito para quem joga, não para quem mexe em registro</h2>
+        <p>Tudo o que um guia de otimização manda fazer à mão, reunido num app só, com explicação em cada item e um botão para desfazer.</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="icon" style="background: rgba(139,92,246,.14)"><svg viewBox="0 0 24 24" style="stroke: var(--violet-hi)"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+          <h3>Otimizar agora</h3>
+          <p>Um clique aplica os ajustes recomendados: plano de energia, prioridade para o jogo, GPU, rede e serviços.</p>
+        </article>
+        <article class="card">
+          <div class="icon" style="background: rgba(91,240,176,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--stable)"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+          <h3>Desfazer de verdade</h3>
+          <p>Cada valor original fica salvo. O botão Desfazer devolve exatamente o que estava lá, e o app ainda cria um ponto de restauração.</p>
+        </article>
+        <article class="card">
+          <div class="icon" style="background: rgba(96,165,250,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--blue)"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></svg></div>
+          <h3>Aberto para conferir</h3>
+          <p>O código está no GitHub. Dá para ler o que cada ajuste faz, rodar em modo simulação e reportar problemas.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 0">
+    <div class="wrap split">
+      <div>
+        <h2>FPS médio alto não adianta se o jogo engasga</h2>
+        <p>O que você sente como travada é um quadro que demorou demais. Os ajustes do Overclutch atacam o que costuma causar esses picos: economia de energia, tarefas de fundo, gravação em segundo plano e limitação de rede.</p>
+        <p style="font-size: 14px">O gráfico é uma ilustração. O ganho real depende do seu PC.</p>
+      </div>
+      <figure class="hud" aria-label="Gráfico ilustrativo de frametime antes e depois">
         <div class="hud-top"><b>Frametime</b><span>ms por quadro</span></div>
-        <svg class="graph" id="graph" viewBox="0 0 600 240" role="img" aria-hidden="true">
+        <svg class="graph" id="graph" viewBox="0 0 600 230" aria-hidden="true">
           <defs>
-            <linearGradient id="scanGlow" x1="0" x2="1">
-              <stop offset="0" stop-color="#a78bfa" stop-opacity="0"/>
-              <stop offset="1" stop-color="#a78bfa" stop-opacity=".22"/>
-            </linearGradient>
-            <!-- A varredura: o recorte "antes" encolhe e o "depois" cresce junto com a linha roxa. -->
-            <clipPath id="clipBefore"><rect id="cb" x="34" y="0" width="566" height="240">
-              <animate class="sweep" attributeName="x" from="34" to="600" begin="0.9s" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
-              <animate class="sweep" attributeName="width" from="566" to="0" begin="0.9s" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
+            <linearGradient id="glow" x1="0" x2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity="0"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".22"/></linearGradient>
+            <clipPath id="clipBefore"><rect id="cb" x="34" y="0" width="566" height="230">
+              <animate class="sweep" attributeName="x" from="34" to="600" begin="indefinite" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
+              <animate class="sweep" attributeName="width" from="566" to="0" begin="indefinite" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
             </rect></clipPath>
-            <clipPath id="clipAfter"><rect id="ca" x="0" y="0" width="34" height="240">
-              <animate class="sweep" attributeName="width" from="34" to="600" begin="0.9s" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
+            <clipPath id="clipAfter"><rect id="ca" x="0" y="0" width="34" height="230">
+              <animate class="sweep" attributeName="width" from="34" to="600" begin="indefinite" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
             </rect></clipPath>
           </defs>
           <line class="axis" x1="34" y1="200" x2="600" y2="200"/>
@@ -271,99 +359,112 @@
           <path class="before" id="lineBefore" clip-path="url(#clipBefore)"/>
           <path class="after" id="lineAfter" clip-path="url(#clipAfter)"/>
           <g id="scanner" opacity="0">
-            <animate class="sweep" attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.9;1" begin="0.9s" dur="1.8s" fill="freeze"/>
-            <rect class="scan-glow" x="-26" y="20" width="60" height="180"/>
+            <animate class="sweep" attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.9;1" begin="indefinite" dur="1.8s" fill="freeze"/>
+            <rect x="-26" y="20" width="60" height="180" fill="url(#glow)"/>
             <line class="scan" x1="34" y1="20" x2="34" y2="200"/>
-            <animateTransform class="sweep" attributeName="transform" type="translate" from="0 0" to="566 0" begin="0.9s" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
+            <animateTransform class="sweep" attributeName="transform" type="translate" from="0 0" to="566 0" begin="indefinite" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.33 1 0.68 1"/>
           </g>
         </svg>
         <div class="legend">
           <span><i style="background: var(--stutter)"></i>Travadas (picos)</span>
           <span><i style="background: var(--stable)"></i>Linha estável</span>
+          <button class="replay" id="replay" type="button">Ver de novo</button>
         </div>
-        <figcaption class="hud-caption">Ilustração de como travadas aparecem num gráfico de frametime. O ganho real depende do seu PC.</figcaption>
       </figure>
     </div>
   </section>
 
-  <section id="o-que-muda">
-    <div class="wrap split">
-      <div class="split-head">
+  <section id="otimizacoes" style="padding-top: 0">
+    <div class="wrap">
+      <div class="section-head">
         <h2>O que o Overclutch muda no seu PC</h2>
-        <p>São 25 ajustes oficiais do Windows. Os recomendados entram no botão Otimizar agora; os opcionais você liga se quiser. Cada um mostra se está ativo no app.</p>
+        <p>Ajustes oficiais do Windows, cada um com explicação. Os recomendados entram no Otimizar agora; os opcionais você liga se quiser.</p>
       </div>
-      <div id="tweaks"></div>
+      <div class="filters" id="filters" role="group" aria-label="Filtrar por categoria"></div>
+      <div class="tweaks" id="tweaks"></div>
     </div>
   </section>
 
-  <section>
-    <div class="wrap">
-      <h2>Feito para entender em dez segundos</h2>
-      <p class="muted" style="margin-top: 14px; max-width: 36em">Um botão para otimizar, uma lista para conferir e uma aba para limpar o PC.</p>
-      <div class="tabs chamfer" role="tablist" aria-label="Telas do app">
-        <button class="tab chamfer" role="tab" aria-selected="true" data-shot="assets/app-home.png" data-alt="Tela inicial do Overclutch">Início</button>
-        <button class="tab chamfer" role="tab" aria-selected="false" data-shot="assets/app-tweaks.png" data-alt="Lista de otimizações do Overclutch">Otimizações</button>
-        <button class="tab chamfer" role="tab" aria-selected="false" data-shot="assets/app-clean.png" data-alt="Tela de limpeza do Overclutch">Limpeza</button>
-      </div>
-      <div class="shot chamfer"><img id="shot" class="chamfer" src="assets/app-home.png" alt="Tela inicial do Overclutch" width="2360" height="1520" loading="lazy"></div>
+  <section style="padding-top: 0">
+    <div class="wrap duo">
+      <article class="card">
+        <div class="icon" style="background: rgba(245,177,76,.14)"><svg viewBox="0 0 24 24" style="stroke: var(--amber)"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/></svg></div>
+        <h2 style="font-size: clamp(24px, 2.4vw, 32px)">Limpeza</h2>
+        <p class="muted" style="margin-top: 10px">Libere espaço com um clique por item ou tudo de uma vez. Arquivos em uso são mantidos.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Arquivos temporários</b> do usuário e do Windows</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Cache de miniaturas</b> do Explorer</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Cache do Windows Update</b> já instalado</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Lixeira</b> e <b>cache DNS</b></span></li>
+        </ul>
+      </article>
+      <article class="card">
+        <div class="icon" style="background: rgba(91,240,176,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--stable)"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h2 style="font-size: clamp(24px, 2.4vw, 32px)">Restauração</h2>
+        <p class="muted" style="margin-top: 10px">Duas camadas de segurança para você testar sem medo.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Backup do Overclutch</b>: desfaz só o que o app mudou</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Ponto de restauração</b> do Windows antes de otimizar</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Lista dos pontos</b> existentes, do mais novo ao mais antigo</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Modo simulação</b>: mostra o que mudaria, sem mudar</span></li>
+        </ul>
+      </article>
     </div>
   </section>
 
-  <section id="instalar">
+  <section style="padding-top: 0">
     <div class="wrap">
-      <h2>Instalar leva um minuto</h2>
+      <div class="section-head">
+        <h2>Por que não fazer na mão?</h2>
+        <p>Dá para fazer. São dezenas de chaves de registro, serviços e menus escondidos, e nenhum jeito simples de voltar atrás.</p>
+      </div>
+      <div class="compare">
+        <table>
+          <thead><tr><th></th><th class="us">Overclutch</th><th>Na mão</th><th>Script da internet</th></tr></thead>
+          <tbody>
+            <tr><td>Aplica tudo em um clique</td><td class="us yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
+            <tr><td>Explica o que cada ajuste faz</td><td class="us yes">✓</td><td class="meh">se você pesquisar</td><td class="no">—</td></tr>
+            <tr><td>Salva os valores originais</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+            <tr><td>Desfaz em um clique</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+            <tr><td>Limpeza do sistema junto</td><td class="us yes">✓</td><td class="meh">vários lugares</td><td class="meh">às vezes</td></tr>
+            <tr><td>Avisa quando sai versão nova</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalar" style="padding-top: 0">
+    <div class="wrap">
+      <div class="section-head"><h2>Instalar leva um minuto</h2></div>
       <ol class="steps">
-        <li><h3>Baixe o instalador</h3><p>Um arquivo de cerca de 2 MB. Não precisa de nenhum outro programa.</p></li>
+        <li><h3>Baixe o instalador</h3><p>Um arquivo de cerca de 2 MB, direto do GitHub. Não precisa de nenhum outro programa.</p></li>
         <li><h3>Siga o assistente</h3><p>Escolha a pasta e os atalhos. A instalação não pede senha de administrador.</p></li>
         <li><h3>Clique em Otimizar agora</h3><p>O app cria um ponto de restauração, aplica os ajustes recomendados e avisa se precisa reiniciar.</p></li>
       </ol>
-      <p class="notice"><b>Se o Windows mostrar "O Windows protegeu o computador":</b> isso acontece com programas novos que ainda não têm assinatura digital paga. Clique em Mais informações e depois em Executar assim mesmo. O código é aberto, então você pode conferir tudo o que ele faz.</p>
+      <p class="notice"><b>Se aparecer "O Windows protegeu o computador":</b> isso acontece com programas novos que ainda não têm assinatura digital paga. Clique em Mais informações e depois em Executar assim mesmo. O código é aberto, então você pode conferir tudo o que ele faz.</p>
     </div>
   </section>
 
-  <section>
+  <section id="faq" style="padding-top: 0">
     <div class="wrap">
-      <h2>Se não gostar, volta tudo</h2>
-      <div class="facts">
-        <div class="fact">
-          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-          <h3>Desfazer em um clique</h3>
-          <p>Antes de cada mudança o valor original é salvo. O botão Desfazer devolve exatamente o que estava lá.</p>
-        </div>
-        <div class="fact">
-          <svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>
-          <h3>Ponto de restauração</h3>
-          <p>O Otimizar agora cria um ponto de restauração do Windows antes de começar, como segunda camada de segurança.</p>
-        </div>
-        <div class="fact">
-          <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-          <h3>Modo simulação</h3>
-          <p>Mostra no registro tudo o que seria alterado, sem mudar nada. Bom para conferir antes de aplicar.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <div class="oss chamfer">
-        <div>
-          <h2>Grátis e de código aberto</h2>
-          <p>O Overclutch está em fase de testes e é gratuito para quem quiser usar. O código fica público no GitHub: dá para ler, sugerir melhorias e reportar problemas.</p>
-        </div>
-        <div class="oss-actions">
-          <a class="btn btn-main chamfer js-download" href="#">Baixar o instalador</a>
-          <a class="btn btn-alt chamfer js-repo" href="#">Abrir no GitHub</a>
-          <a class="btn btn-alt chamfer js-issues" href="#">Reportar um problema</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="faq">
-    <div class="wrap">
-      <h2 style="margin-bottom: 28px">Dúvidas comuns</h2>
+      <div class="section-head"><h2>Dúvidas comuns</h2></div>
       <div class="faq" id="faq-list"></div>
+    </div>
+  </section>
+
+  <section style="padding-top: 0">
+    <div class="wrap">
+      <div class="final">
+        <div>
+          <h2>Pronto para testar no seu PC?</h2>
+          <p>Grátis, sem cadastro e sem pegadinha. Se não gostar, um clique desfaz tudo.</p>
+        </div>
+        <a class="btn btn-main js-download" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+          Baixar o Overclutch
+        </a>
+      </div>
     </div>
   </section>
 </main>
@@ -373,9 +474,10 @@
     <span>Overclutch é um projeto open source sob licença MIT.</span>
     <nav aria-label="Links">
       <a class="js-repo" href="#">Código</a>
-      <a class="js-issues" href="#">Problemas</a>
+      <a class="js-issues" href="#">Reportar problema</a>
       <a class="js-license" href="#">Licença</a>
     </nav>
+    <div class="social" id="social"></div>
   </div>
 </footer>
 
@@ -383,123 +485,162 @@
   // ===================== CONFIGURAÇÃO: edite aqui =====================
   const CONFIG = {
     repo: "https://github.com/freitasscaio/overclutch",
-    // O workflow do GitHub publica o instalador com este nome em cada versão.
     download: "https://github.com/freitasscaio/overclutch/releases/latest/download/Overclutch-Setup.exe",
+    // Redes sociais: link vazio = ícone escondido.
+    instagram: "",
+    youtube: "",
+    discord: "",
   };
   // ====================================================================
 
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const setHref = (cls, url) => document.querySelectorAll(cls).forEach((a) => (a.href = url));
   setHref(".js-download", CONFIG.download);
   setHref(".js-repo", CONFIG.repo);
   setHref(".js-issues", CONFIG.repo + "/issues");
   setHref(".js-license", CONFIG.repo + "/blob/main/LICENSE");
 
-  // Mesmo catálogo de src/Tweaks.ps1 (rec = entra no "Otimizar agora").
-  const TWEAKS = [
-    ["Sistema", [
-      ["Plano de energia Desempenho Máximo", "O processador não reduz o clock no meio da partida.", 1],
-      ["Modo de Jogo do Windows", "Prioridade para o jogo e atualizações seguradas durante a partida.", 1],
-      ["Agendamento de GPU por hardware", "A placa de vídeo organiza a própria fila de trabalho.", 1],
-      ["Sem Power Throttling", "O Windows para de economizar CPU em processos em segundo plano.", 1],
-      ["Prioridade para a janela ativa", "Fatias de CPU maiores para o programa em primeiro plano.", 1],
-      ["Apps em segundo plano bloqueados", "Apps da Store não rodam escondidos.", 1],
-      ["Sem atraso de inicialização", "Programas de inicialização abrem sem espera artificial.", 1],
-      ["Efeitos visuais simples", "Sem transparência e animações do Windows.", 0],
-    ]],
-    ["Jogos", [
-      ["Game DVR desligado", "A Xbox Game Bar para de gravar o jogo o tempo todo.", 1],
-      ["Prioridade de jogos no agendador multimídia", "Prioridade alta de GPU e CPU para a tarefa Games.", 1],
-      ["Menos CPU reservada para o fundo", "De 20% para 10% reservado a tarefas de baixa prioridade.", 1],
-      ["Sem otimizações de tela cheia", "Tela cheia exclusiva em jogos DirectX antigos.", 0],
-    ]],
-    ["Mouse, teclado e rede", [
-      ["Mouse sem aceleração", "A mira responde 1:1 ao movimento da mão.", 1],
-      ["Rede sem limitação multimídia", "Sem limite de pacotes quando há áudio ou vídeo tocando.", 1],
-      ["Algoritmo de Nagle desligado", "Pacotes TCP saem na hora, sem esperar para agrupar.", 1],
-      ["Repetição de teclado mais rápida", "Menos atraso ao segurar uma tecla.", 0],
-    ]],
-    ["Recursos do Windows", [
-      ["Copilot desligado", "Sem o Copilot do Windows e sem o botão dele na barra de tarefas.", 1],
-      ["Widgets desligados", "O painel de notícias e clima para de carregar conteúdo em segundo plano.", 1],
-      ["Recall desligado", "O Windows para de tirar capturas da tela para a linha do tempo de IA.", 1],
-      ["Sobreposição da Game Bar desligada", "Win+G deixa de abrir a Game Bar por cima do jogo.", 0],
-      ["Isolamento de núcleo desligado", "Pode dar alguns FPS, mas desliga uma proteção de segurança. Risco alto.", 0],
-    ]],
-    ["Serviços do Windows", [
-      ["Telemetria desligada", "Para o serviço que envia dados de uso em segundo plano.", 1],
-      ["SysMain desligado", "Menos uso de disco em segundo plano. Indicado para SSD.", 0],
-      ["Indexação de pesquisa desligada", "Libera disco e CPU; a busca do Iniciar fica mais lenta.", 0],
-      ["Serviços Xbox desligados", "Não use se joga pelo app Xbox ou Game Pass.", 0],
-    ]],
-  ];
-  $("#tweaks").innerHTML = TWEAKS.map(([group, items]) => `
-    <div class="tweak-group"><h3>${esc(group)}</h3>
-      ${items.map(([name, desc, rec]) => `
-        <div class="tweak"><b>${esc(name)}</b><span class="state ${rec ? "" : "opt"}">${rec ? "Recomendado" : "Opcional"}</span><p>${esc(desc)}</p></div>`).join("")}
-    </div>`).join("") ;
+  // Versão mais recente no selo do topo (sem internet, fica "v1").
+  fetch("https://api.github.com/repos/freitasscaio/overclutch/releases/latest")
+    .then((r) => (r.ok ? r.json() : null)).then((r) => { if (r && r.tag_name) $("#version-pill").textContent = r.tag_name; }).catch(() => {});
 
+  // Redes sociais no rodapé
+  const SOCIAL = {
+    instagram: ["Instagram", '<path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z"/><circle cx="12" cy="12" r="4"/><path d="M17.4 6.6h.1"/>'],
+    youtube: ["YouTube", '<path d="M4 6.5c3-.9 13-.9 16 0 1.3.4 1.8 2 1.8 5.5s-.5 5.1-1.8 5.5c-3 .9-13 .9-16 0C2.7 17.1 2.2 15.5 2.2 12s.5-5.1 1.8-5.5z"/><path d="m10 9 5 3-5 3z"/>'],
+    discord: ["Discord", '<path d="M8.5 5.5c-1.9.4-3.4 1-4.7 1.9-1.7 2.8-2.2 5.8-1.7 8.8 1.5 1.2 3.1 1.9 4.8 2.3L8 16.6m8 0 1.1 1.9c1.7-.4 3.3-1.1 4.8-2.3.5-3-.0-6-1.7-8.8-1.3-.9-2.8-1.5-4.7-1.9M6.6 16c3.4 1.6 7.4 1.6 10.8 0M7.4 7.3c3-1 6.2-1 9.2 0"/><circle cx="9.2" cy="12.3" r="1.3"/><circle cx="14.8" cy="12.3" r="1.3"/>'],
+    github: ["GitHub", '<path d="m9 8-4 4 4 4M15 8l4 4-4 4"/>'],
+  };
+  const links = { instagram: CONFIG.instagram, youtube: CONFIG.youtube, discord: CONFIG.discord, github: CONFIG.repo };
+  $("#social").innerHTML = Object.entries(SOCIAL).filter(([k]) => links[k]).map(([k, [label, icon]]) =>
+    `<a href="${esc(links[k])}" aria-label="${label}" title="${label}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24">${icon}</svg></a>`).join("");
+
+  // Fatos (só números reais)
+  const FACTS = [["25", "otimizações explicadas"], ["5", "tipos de limpeza"], ["1 clique", "para otimizar ou desfazer"], ["Grátis", "sem cadastro e de código aberto"]];
+  $("#facts").innerHTML = FACTS.map(([n, t]) => `<div class="fact"><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join("");
+
+  // Vitrine com as telas do app
+  const SHOTS = [
+    ["Painel", "assets/app-home.jpg"], ["Otimizações", "assets/app-tweaks.jpg"], ["Limpeza", "assets/app-clean.jpg"],
+    ["Restauração", "assets/app-restore.jpg"], ["Configurações", "assets/app-settings.jpg"],
+  ];
+  const tabs = $("#tabs"), shot = $("#shot");
+  tabs.innerHTML = SHOTS.map(([n, src], i) => `<button class="tab" role="tab" aria-selected="${i === 0}" data-src="${src}" data-alt="Tela ${esc(n)} do Overclutch">${esc(n)}</button>`).join("");
+  tabs.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab"); if (!tab) return;
+    tabs.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t === tab));
+    if (shot.getAttribute("src") === tab.dataset.src) return;
+    shot.classList.add("swap");
+    setTimeout(() => {
+      const show = () => shot.classList.remove("swap");
+      shot.onload = show; shot.src = tab.dataset.src; shot.alt = tab.dataset.alt;
+      if (shot.complete) show(); setTimeout(show, 700);
+    }, 160);
+  });
+  SHOTS.slice(1).forEach(([, src]) => { const i = new Image(); i.src = src; });   // pré-carrega
+
+  // Inclinação leve do print seguindo o mouse (só em telas grandes)
+  const frame = $("#frame");
+  if (!reduced && matchMedia("(min-width: 1081px) and (pointer: fine)").matches) {
+    const box = frame.parentElement;
+    box.addEventListener("mousemove", (e) => {
+      const r = box.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      frame.style.transform = `rotateY(${(-6 + x * 8).toFixed(2)}deg) rotateX(${(3 - y * 6).toFixed(2)}deg)`;
+    });
+    box.addEventListener("mouseleave", () => (frame.style.transform = ""));
+  }
+
+  // Lista de otimizações (mesmo catálogo de src/Tweaks.ps1). tag: rec, opt ou alto.
+  const TWEAKS = [
+    ["Sistema", "Plano de energia Desempenho Máximo", "O processador não reduz o clock no meio da partida.", "rec"],
+    ["Sistema", "Modo de Jogo do Windows", "Prioridade para o jogo e atualizações seguradas durante a partida.", "rec"],
+    ["Sistema", "Agendamento de GPU por hardware", "A placa de vídeo organiza a própria fila de trabalho.", "rec"],
+    ["Sistema", "Sem Power Throttling", "O Windows para de economizar CPU em processos em segundo plano.", "rec"],
+    ["Sistema", "Prioridade para a janela ativa", "Fatias de CPU maiores para o programa em primeiro plano.", "rec"],
+    ["Sistema", "Apps em segundo plano bloqueados", "Apps da Store não rodam escondidos.", "rec"],
+    ["Sistema", "Sem atraso de inicialização", "Programas de inicialização abrem sem espera artificial.", "rec"],
+    ["Sistema", "Efeitos visuais simples", "Sem transparência e animações; as letras continuam suaves.", "opt"],
+    ["Jogos", "Game DVR desligado", "A Xbox Game Bar para de gravar o jogo o tempo todo.", "rec"],
+    ["Jogos", "Prioridade de jogos no agendador multimídia", "Prioridade alta de GPU e CPU para a tarefa Games.", "rec"],
+    ["Jogos", "Menos CPU reservada para o fundo", "De 20% para 10% reservado a tarefas de baixa prioridade.", "rec"],
+    ["Jogos", "Sem otimizações de tela cheia", "Tela cheia exclusiva em jogos DirectX antigos.", "opt"],
+    ["Mouse, teclado e rede", "Mouse sem aceleração", "A mira responde 1:1 ao movimento da mão.", "rec"],
+    ["Mouse, teclado e rede", "Rede sem limitação multimídia", "Sem limite de pacotes quando há áudio ou vídeo tocando.", "rec"],
+    ["Mouse, teclado e rede", "Algoritmo de Nagle desligado", "Pacotes TCP saem na hora, sem esperar para agrupar.", "rec"],
+    ["Mouse, teclado e rede", "Repetição de teclado mais rápida", "Menos atraso ao segurar uma tecla.", "opt"],
+    ["Recursos do Windows", "Copilot desligado", "Sem o Copilot do Windows e sem o botão dele na barra de tarefas.", "rec"],
+    ["Recursos do Windows", "Widgets desligados", "O painel de notícias e clima para de carregar em segundo plano.", "rec"],
+    ["Recursos do Windows", "Recall desligado", "O Windows para de tirar capturas da tela para a linha do tempo de IA.", "rec"],
+    ["Recursos do Windows", "Sobreposição da Game Bar desligada", "Win+G deixa de abrir a Game Bar por cima do jogo.", "opt"],
+    ["Recursos do Windows", "Isolamento de núcleo desligado", "Pode dar alguns FPS, mas desliga uma proteção de segurança.", "alto"],
+    ["Serviços", "Telemetria desligada", "Para o serviço que envia dados de uso em segundo plano.", "rec"],
+    ["Serviços", "SysMain desligado", "Menos uso de disco em segundo plano. Indicado para SSD.", "opt"],
+    ["Serviços", "Indexação de pesquisa desligada", "Libera disco e CPU; a busca do Iniciar fica mais lenta.", "opt"],
+    ["Serviços", "Serviços Xbox desligados", "Não use se joga pelo app Xbox ou Game Pass.", "opt"],
+  ];
+  const TAG = { rec: "Recomendado", opt: "Opcional", alto: "Risco alto" };
+  const cats = ["Todas", ...new Set(TWEAKS.map((t) => t[0]))];
+  const filters = $("#filters"), list = $("#tweaks");
+  filters.innerHTML = cats.map((c, i) => `<button class="chip" type="button" aria-pressed="${i === 0}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  function renderTweaks(cat) {
+    list.innerHTML = TWEAKS.filter((t) => cat === "Todas" || t[0] === cat).map(([c, name, desc, tag]) => `
+      <div class="tweak"><div class="tweak-top"><b>${esc(name)}</b><span class="tag ${tag}">${TAG[tag]}</span></div>
+      <p>${esc(desc)}</p>${cat === "Todas" ? `<small>${esc(c)}</small>` : ""}</div>`).join("");
+  }
+  filters.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip"); if (!chip) return;
+    filters.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c === chip));
+    renderTweaks(chip.dataset.cat);
+  });
+  renderTweaks("Todas");
+
+  // FAQ
   const FAQ = [
-    ["É seguro para o meu Windows?", "O Overclutch só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer todas as otimizações volta tudo como era."],
-    ["Quanto de FPS eu vou ganhar?", "Depende do PC. Quem usa o Windows como veio de fábrica, notebook ou muitos programas em segundo plano costuma notar mais. Em PCs já ajustados, a diferença aparece mais como estabilidade e menos input lag do que em FPS médio. Meça no mesmo jogo, antes e depois."],
+    ["É seguro para o meu Windows?", "O Overclutch só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer volta tudo como era."],
+    ["Quanto de FPS eu vou ganhar?", "Depende do PC. Quem usa o Windows como veio de fábrica, notebook ou muitos programas em segundo plano costuma notar mais. Em PCs já ajustados, a diferença aparece mais como estabilidade e menos input lag. Meça no mesmo jogo, antes e depois."],
     ["Pode dar ban em jogo com anti-cheat?", "O Overclutch não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente."],
     ["Por que é grátis?", "O projeto está em fase de testes e é de código aberto. Usar, estudar e modificar o código é livre pela licença MIT."],
-    ["Funciona em notebook?", "Sim. Os ajustes valem para qualquer PC com Windows 10 ou 11. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
+    ["Funciona em notebook?", "Sim, em qualquer PC com Windows 10 ou 11 de 64 bits. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
+    ["Como recebo as atualizações?", "Ao abrir, o app consulta o GitHub. Quando sai uma versão nova, aparece um aviso com o botão Atualizar agora: ele baixa o instalador oficial, confere a integridade e reinstala sozinho."],
+    ["A limpeza apaga meus arquivos?", "Não. Ela só mexe em pastas temporárias, caches do Windows e na Lixeira. A Lixeira é esvaziada só quando você clica, e arquivos em uso são mantidos."],
     ["Como desinstalo?", "Pelo Windows, em Configurações, Aplicativos instalados, Overclutch. O desinstalador pergunta se você quer reverter as otimizações antes de remover o programa."],
   ];
   const plus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   $("#faq-list").innerHTML = FAQ.map(([q, a]) => `<details><summary>${esc(q)}${plus}</summary><p>${esc(a)}</p></details>`).join("");
 
-  // Abas da vitrine (troca com um fade curto)
-  document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t === tab));
-    const img = $("#shot");
-    if (img.getAttribute("src") === tab.dataset.shot) return;
-    img.classList.add("swap");
-    setTimeout(() => {
-      const show = () => img.classList.remove("swap");
-      img.onload = show;
-      img.src = tab.dataset.shot; img.alt = tab.dataset.alt;
-      if (img.complete) show();
-      setTimeout(show, 700); // nunca deixa a imagem escondida se o load não vier
-    }, 180);
-  }));
-
-  // Menu no celular
-  const menuBtn = $("#menu-btn"), links = $("#nav-links");
-  menuBtn.addEventListener("click", () => menuBtn.setAttribute("aria-expanded", links.classList.toggle("open")));
-  links.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => {
-    links.classList.remove("open"); menuBtn.setAttribute("aria-expanded", false);
-  }));
-
-  // Gráfico de frametime: linha com picos que a varredura deixa estável.
+  // Gráfico de frametime: linha com picos; a varredura a deixa estável quando o gráfico aparece na tela.
   (function graph() {
-    const X0 = 34, X1 = 600, Y0 = 200, PX_PER_MS = 8, N = 96;
+    const X0 = 34, X1 = 600, Y0 = 200, PX = 8, N = 96;
     let seed = 7;
-    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const before = [], after = [];
     for (let i = 0; i < N; i++) {
       let b = 7 + (rand() - 0.5) * 1.6;
-      if (i % 13 === 5 || i % 29 === 17) b = 15 + rand() * 9;     // travadas
-      else if (rand() < 0.08) b += 3 + rand() * 3;                  // micro-travadas
-      before.push(b);
-      after.push(5.8 + (rand() - 0.5) * 0.5);
+      if (i % 13 === 5 || i % 29 === 17) b = 15 + rand() * 9;
+      else if (rand() < 0.08) b += 3 + rand() * 3;
+      before.push(b); after.push(5.8 + (rand() - 0.5) * 0.5);
     }
-    const toPath = (arr) => arr.map((v, i) => {
-      const x = X0 + (i / (N - 1)) * (X1 - X0), y = Y0 - v * PX_PER_MS;
-      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-    }).join("");
-    $("#lineBefore").setAttribute("d", toPath(before));
-    $("#lineAfter").setAttribute("d", toPath(after));
-
-    // A varredura é SMIL (roda sem JS). Com "reduzir movimento", mostra direto o estado final.
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      document.querySelectorAll(".sweep").forEach((a) => a.remove());
-      $("#cb").setAttribute("width", 0);
-      $("#ca").setAttribute("width", 600);
-    }
+    const path = (arr) => arr.map((v, i) => (i ? "L" : "M") + (X0 + (i / (N - 1)) * (X1 - X0)).toFixed(1) + " " + (Y0 - v * PX).toFixed(1)).join("");
+    $("#lineBefore").setAttribute("d", path(before));
+    $("#lineAfter").setAttribute("d", path(after));
+    const sweeps = [...document.querySelectorAll("#graph .sweep")];
+    const play = () => { try { sweeps.forEach((a) => a.beginElement()); } catch (e) { done(); } };
+    const done = () => { $("#cb").setAttribute("width", 0); $("#ca").setAttribute("width", 600); };
+    if (reduced) { sweeps.forEach((a) => a.remove()); done(); $("#replay").hidden = true; return; }
+    $("#replay").addEventListener("click", play);
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { setTimeout(play, 300); io.disconnect(); } }, { threshold: 0.5 });
+      io.observe($("#graph"));
+    } else play();
   })();
+
+  // Menu no celular
+  const menuBtn = $("#menu-btn"), navLinks = $("#nav-links");
+  menuBtn.addEventListener("click", () => menuBtn.setAttribute("aria-expanded", navLinks.classList.toggle("open")));
+  navLinks.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => { navLinks.classList.remove("open"); menuBtn.setAttribute("aria-expanded", false); }));
 </script>
 </body>
 </html>
