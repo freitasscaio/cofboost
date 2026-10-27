@@ -112,10 +112,14 @@ $script:Tweaks = @(
     @{
         Id = 'visual-effects'; Category = 'Sistema'; Default = $false; Risk = 'Baixo'
         Name = 'Efeitos visuais para desempenho'
-        Description = 'Desliga transparência e animações do Windows. Ajuda PCs fracos, mas o visual fica mais simples.'
+        Description = 'Desliga transparência e animações do Windows. Ajuda PCs fracos, mas o visual fica mais simples. As letras continuam suaves (ClearType).'
         Registry = @(
             (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' 2)
             (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' 0)
+            # O modo "melhor desempenho" do Windows também desliga a suavização de fontes,
+            # o que deixa o texto serrilhado em todo o sistema. Mantém ligada (ClearType).
+            (RegSet 'HKCU:\Control Panel\Desktop' 'FontSmoothing' '2' 'String')
+            (RegSet 'HKCU:\Control Panel\Desktop' 'FontSmoothingType' 2)
         )
     }
 

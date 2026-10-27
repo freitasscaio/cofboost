@@ -3,7 +3,7 @@
 # para que possa ser desfeita exatamente como estava.
 
 $script:AppName    = 'Overclutch'
-$script:AppVersion = '1.0.5'
+$script:AppVersion = '1.0.6'
 
 $script:Core = @{
     DataDir    = $null
