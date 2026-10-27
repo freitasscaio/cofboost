@@ -228,6 +228,61 @@ function Build-TweakList {
     }
 }
 
+function New-ImageFromFile {
+    param([string]$Path)
+    # OnLoad lê o arquivo e solta na hora (não trava a capa nem o ícone).
+    $img = New-Object System.Windows.Media.Imaging.BitmapImage
+    $img.BeginInit()
+    $img.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+    $img.DecodePixelWidth = 496
+    $img.UriSource = [Uri]$Path
+    $img.EndInit()
+    $img.Freeze()
+    $img
+}
+
+function Get-ExeIconSource {
+    param([string]$Exe)
+    try {
+        Add-Type -AssemblyName System.Drawing
+        $ico = [System.Drawing.Icon]::ExtractAssociatedIcon($Exe)
+        $src = [System.Windows.Interop.Imaging]::CreateBitmapSourceFromHIcon($ico.Handle, [System.Windows.Int32Rect]::Empty,
+            [System.Windows.Media.Imaging.BitmapSizeOptions]::FromEmptyOptions())
+        $src.Freeze(); $ico.Dispose()
+        $src
+    } catch { $null }
+}
+
+# Área da capa: a imagem do jogo ou, sem capa, o ícone do .exe sobre um fundo escuro.
+function New-GameCover {
+    param($Game, [bool]$Exists)
+    $cover = New-Object System.Windows.Controls.Border
+    $cover.Height = 116
+    $cover.CornerRadius = New-Object System.Windows.CornerRadius(11, 11, 0, 0)
+    $file = Get-CoverFile $Game.Path
+    $image = $null
+    if (Test-Path -LiteralPath $file) { try { $image = New-ImageFromFile $file } catch { } }
+    if ($image) {
+        $brush = New-Object System.Windows.Media.ImageBrush($image)
+        $brush.Stretch = 'UniformToFill'
+        $cover.Background = $brush
+        return $cover
+    }
+    $cover.Background = New-Brush '#1D1838'
+    $icon = if ($Exists) { Get-ExeIconSource $Game.Path } else { $null }
+    if ($icon) {
+        $img = New-Object System.Windows.Controls.Image
+        $img.Source = $icon; $img.Width = 48; $img.Height = 48
+        $cover.Child = $img
+    } else {
+        $initials = -join (($Game.Name -split '\s+' | Where-Object { $_ } | Select-Object -First 2) | ForEach-Object { $_.Substring(0, 1).ToUpper() })
+        $text = New-Text $initials 30 '#A78BFA' -Bold
+        $text.HorizontalAlignment = 'Center'; $text.VerticalAlignment = 'Center'
+        $cover.Child = $text
+    }
+    $cover
+}
+
 function Build-GameList {
     $panel = $script:UI.GameList
     $panel.Children.Clear()
@@ -238,41 +293,56 @@ function Build-GameList {
         return
     }
     foreach ($g in $script:Games) {
-        $card = New-Card
-        $grid = New-RowGrid
-
-        $badge = New-Badge
-        $badge.Margin = New-Thickness 0 0 16 0
         $exists = Test-Path -LiteralPath $g.Path
-        Set-Badge $badge (Test-GameBoosted $g) 'OTIMIZADO' 'NORMAL'
-        [System.Windows.Controls.Grid]::SetColumn($badge, 0)
+        $tile = New-Object System.Windows.Controls.Border
+        $tile.Width = 248
+        $tile.Margin = New-Thickness 0 0 14 14
+        $tile.CornerRadius = New-Object System.Windows.CornerRadius(12)
+        $tile.Background = New-Brush '#141821'
+        $tile.BorderBrush = New-Brush '#232838'
+        $tile.BorderThickness = New-Thickness 1 1 1 1
+        $tile.ToolTip = "$($g.Name)`n$($g.Path)"
 
-        $info = New-Object System.Windows.Controls.StackPanel
-        [void]$info.Children.Add((New-Text $g.Name 14 '#FFFFFF' -Bold))
-        $pathText = if ($exists) { $g.Path } else { "$($g.Path)  (arquivo não encontrado)" }
-        [void]$info.Children.Add((New-Text $pathText 11))
-        [System.Windows.Controls.Grid]::SetColumn($info, 1)
+        $stack = New-Object System.Windows.Controls.StackPanel
+        [void]$stack.Children.Add((New-GameCover $g $exists))
 
+        $body = New-Object System.Windows.Controls.StackPanel
+        $body.Margin = New-Thickness 14 12 14 14
+        $name = New-Text $g.Name 14 '#FFFFFF' -Bold
+        $name.TextWrapping = 'NoWrap'
+        $name.TextTrimming = 'CharacterEllipsis'
+        [void]$body.Children.Add($name)
+        if (-not $exists) {
+            $missing = New-Text 'Arquivo do jogo não encontrado' 11 '#FBBF24'
+            $missing.Margin = New-Thickness 0 2 0 0
+            [void]$body.Children.Add($missing)
+        }
+
+        $row = New-Object System.Windows.Controls.DockPanel
+        $row.Margin = New-Thickness 0 12 0 0
         $remove = New-Object System.Windows.Controls.Button
         $remove.Style = $script:Window.FindResource('SecondaryButton')
+        $remove.Padding = New-Thickness 12 5 12 5
+        $remove.FontSize = 12
         $remove.Content = 'Remover'
         $remove.Tag = $g.Path
-        $remove.Margin = New-Thickness 16 0 0 0
-        $remove.VerticalAlignment = 'Center'
         $remove.Add_Click({
             $path = $this.Tag
             Invoke-Busy 'Removendo jogo...' { Remove-Game $path }
         })
-        [System.Windows.Controls.Grid]::SetColumn($remove, 2)
+        [System.Windows.Controls.DockPanel]::SetDock($remove, 'Right')
+        [void]$row.Children.Add($remove)
+        $badge = New-Badge
+        $badge.HorizontalAlignment = 'Left'
+        Set-Badge $badge (Test-GameBoosted $g) 'OTIMIZADO' 'NORMAL'
+        [void]$row.Children.Add($badge)
+        [void]$body.Children.Add($row)
 
-        [void]$grid.Children.Add($badge)
-        [void]$grid.Children.Add($info)
-        [void]$grid.Children.Add($remove)
-        $card.Child = $grid
-        [void]$panel.Children.Add($card)
+        [void]$stack.Children.Add($body)
+        $tile.Child = $stack
+        [void]$panel.Children.Add($tile)
     }
 }
-
 function Update-State {
     $active = 0
     foreach ($t in $script:Tweaks) {
@@ -382,6 +452,7 @@ function Register-Handlers {
                    elseif ($found.Count) { "Todos os $($found.Count) jogos encontrados já estão na lista." }
                    else { 'Nenhum jogo encontrado nas lojas. Use "Adicionar .exe manualmente".' }
             Show-Message $msg | Out-Null
+            Start-CoverFetch
         }
     })
 
@@ -393,6 +464,7 @@ function Register-Handlers {
             $name = [System.IO.Path]::GetFileNameWithoutExtension($dlg.FileName)
             Add-Game $name $dlg.FileName | Out-Null
             Update-State
+            Start-CoverFetch
         }
     })
 
@@ -468,6 +540,16 @@ function Start-GameScan {
             Write-Log "$($added.Count) jogo(s) novo(s) encontrado(s): $($added -join ', ')."
             Build-GameList
         }
+        Start-CoverFetch
+    }
+}
+
+# Busca as capas que faltam (cache da Steam ou loja da Steam) e redesenha os cartões.
+function Start-CoverFetch {
+    Start-InBackground 'param($p) Update-GameCovers' {
+        param($saved, $err)
+        if ($err) { Write-Log "Busca de capas falhou: $err" 'WARN'; return }
+        if ($saved) { Build-GameList }
     }
 }
 

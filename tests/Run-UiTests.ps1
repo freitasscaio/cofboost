@@ -61,7 +61,12 @@ Step 'Jogos: adicionar, otimizar, remover boost e remover' {
     Add-Game 'Jogo de teste' $exe | Out-Null; Update-State
     Check (@($script:Games | Where-Object Path -eq $exe).Count -eq 1) 'jogo adicionado à lista'
     Click 'BtnBoostGames'; Click 'BtnUnboostGames'
-    $remove = $script:UI.GameList.Children | ForEach-Object { $_.Child.Children } | Where-Object { $_ -is [System.Windows.Controls.Button] -and $_.Tag -eq $exe } | Select-Object -First 1
+    function Get-Descendants { param($Node) foreach ($c in [System.Windows.LogicalTreeHelper]::GetChildren($Node)) { if ($c -is [System.Windows.DependencyObject]) { $c; Get-Descendants $c } } }
+    $tile = $script:UI.GameList.Children | Where-Object { "$($_.ToolTip)" -like "*$exe" } | Select-Object -First 1
+    Check ($null -ne $tile) 'jogo aparece como cartão'
+    Check (-not (Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.TextBlock] -and $_.Text -eq $exe })) 'cartão mostra só o nome, sem o caminho'
+    Check ([bool](Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.Border] -and $_.Height -eq 116 })) 'cartão tem área de capa'
+    $remove = Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.Button] -and $_.Tag -eq $exe } | Select-Object -First 1
     if ($remove) { $remove.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))) }
     Check (-not ($script:Games | Where-Object Path -eq $exe)) 'botão Remover tira o jogo da lista'
 }
@@ -73,6 +78,10 @@ Step 'Faixa de atualização: Depois' {
     Show-UpdateBanner ([pscustomobject]@{ Version = '9.9.9'; Url = "https://github.com/$($script:UpdateRepo)/releases/download/v9.9.9/Overclutch-Setup.exe"; Size = 1; Sha256 = $null })
     Check ($script:UI.UpdateBanner.Visibility -eq 'Visible') 'faixa aparece'
     Click 'BtnUpdateLater'; Check ($script:UI.UpdateBanner.Visibility -eq 'Collapsed') 'Depois esconde a faixa'
+}
+Step 'Capas dos jogos' {
+    $withCover = @($script:Games | Where-Object { Test-Path -LiteralPath (Get-CoverFile $_.Path) })
+    Check ($withCover.Count -eq $script:Games.Count) "capas encontradas: $($withCover.Count) de $($script:Games.Count)"
 }
 Step 'Registro de atividades' { Check ($script:UI.LogBox.Text.Length -gt 0) 'Registro mostra as ações' }
 

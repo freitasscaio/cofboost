@@ -174,6 +174,7 @@ function Get-SteamGames {
     foreach ($lib in Get-SteamLibraries) {
         foreach ($acf in Get-ChildItem -LiteralPath (Join-Path $lib 'steamapps') -Filter 'appmanifest_*.acf' -ErrorAction SilentlyContinue) {
             $text = Get-Content -LiteralPath $acf.FullName -Raw -Encoding UTF8
+            $appId = [regex]::Match($text, '"appid"\s+"(\d+)"').Groups[1].Value
             $name = [regex]::Match($text, '"name"\s+"([^"]+)"').Groups[1].Value
             $dir  = [regex]::Match($text, '"installdir"\s+"([^"]+)"').Groups[1].Value
             if (-not $name -or -not $dir -or $name -match $script:SteamSkip) { continue }
@@ -181,7 +182,7 @@ function Get-SteamGames {
             $known = $script:KnownGames | Where-Object { $_.Steam } | ForEach-Object {
                 foreach ($rel in $_.Steam) { if ($rel -like "$dir\*") { Join-Path $lib "steamapps\common\$rel" } }
             } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-            [pscustomobject]@{ Name = $name; Dir = $full; Exe = $known; Store = 'Steam' }
+            [pscustomobject]@{ Name = $name; Dir = $full; Exe = $known; Store = 'Steam'; AppId = $appId; Library = $lib }
         }
     }
 }
@@ -293,6 +294,97 @@ function Find-InstalledGames {
         [void]$out.Add($g)
     }
     $out
+}
+
+# ---------------------------------------------------------------- capas
+
+# A capa de cada jogo fica em DataDir\covers\<hash do caminho>.jpg. A interface só
+# confere se o arquivo existe; Update-GameCovers (em segundo plano) busca as que faltam.
+function Get-CoverFile {
+    param([string]$GamePath)
+    $sha = [System.Security.Cryptography.SHA1]::Create()
+    $hash = -join ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($GamePath.ToLowerInvariant())) | Select-Object -First 10 | ForEach-Object { $_.ToString('x2') })
+    Join-Path (Join-Path $script:Core.DataDir 'covers') "$hash.jpg"
+}
+
+# Capa que a Steam já guardou no PC (biblioteca), sem precisar de internet.
+function Find-SteamCachedCover {
+    param([string]$AppId)
+    $steam = Get-RegValue 'HKCU:\Software\Valve\Steam' 'SteamPath'
+    $roots = @()
+    if ($steam) { $roots += Join-Path ($steam.Value -replace '/', '\') 'appcache\librarycache' }
+    if (${env:ProgramFiles(x86)}) { $roots += Join-Path ${env:ProgramFiles(x86)} 'Steam\appcache\librarycache' }
+    foreach ($r in $roots | Select-Object -Unique) {
+        foreach ($candidate in "$r\$AppId", "$r\${AppId}_header.jpg") {
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+            if (Test-Path -LiteralPath $candidate -PathType Container) {
+                $hit = Get-ChildItem -LiteralPath $candidate -Recurse -Filter 'library_header.jpg' -ErrorAction SilentlyContinue | Select-Object -First 1
+                if (-not $hit) { $hit = Get-ChildItem -LiteralPath $candidate -Recurse -Filter 'header.jpg' -ErrorAction SilentlyContinue | Select-Object -First 1 }
+                if ($hit) { return $hit.FullName }
+            }
+        }
+    }
+    $null
+}
+
+function Invoke-SteamStoreApi {
+    param([string]$Url)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    Invoke-RestMethod -Uri $Url -Headers @{ 'User-Agent' = 'Overclutch' } -TimeoutSec 15
+}
+
+# Procura o jogo na loja da Steam pelo nome; só aceita se o nome bater exatamente.
+function Find-SteamAppIdByName {
+    param([string]$Name)
+    $r = Invoke-SteamStoreApi "https://store.steampowered.com/api/storesearch/?term=$([Uri]::EscapeDataString($Name))&l=english&cc=US"
+    $want = Get-NormalizedName $Name
+    $hit = @($r.items) | Where-Object { (Get-NormalizedName (Get-CleanGameName $_.name)) -eq $want } | Select-Object -First 1
+    if ($hit) { "$($hit.id)" }
+}
+
+function Save-SteamStoreCover {
+    param([string]$AppId, [string]$Target)
+    $d = Invoke-SteamStoreApi "https://store.steampowered.com/api/appdetails?appids=$AppId&filters=basic"
+    $url = "$($d.$AppId.data.header_image)"
+    if ($url -notmatch '^https://[a-z0-9.-]+\.(steamstatic|steampowered)\.com/') { return $false }
+    $wc = New-Object System.Net.WebClient
+    $wc.Headers.Add('User-Agent', 'Overclutch')
+    try { $wc.DownloadFile($url, $Target) } finally { $wc.Dispose() }
+    $len = (Get-Item -LiteralPath $Target).Length
+    if ($len -lt 1KB -or $len -gt 5MB) { Remove-Item -LiteralPath $Target -Force; return $false }
+    $true
+}
+
+# Busca as capas que faltam. Ordem: cache local da Steam, loja da Steam (pelo id ou pelo
+# nome). Sem capa, a interface mostra o ícone do .exe. Devolve quantas capas novas salvou.
+function Update-GameCovers {
+    Import-Games
+    $dir = Join-Path $script:Core.DataDir 'covers'
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    $steamDirs = @(Get-SteamGames)
+    $saved = 0
+    foreach ($g in $script:Games) {
+        $target = Get-CoverFile $g.Path
+        $miss = [IO.Path]::ChangeExtension($target, '.none')
+        if (Test-Path -LiteralPath $target) { continue }
+        # Jogo sem capa em lugar nenhum: tenta de novo só depois de uma semana.
+        if ((Test-Path -LiteralPath $miss) -and ((Get-Item -LiteralPath $miss).LastWriteTime -gt (Get-Date).AddDays(-7))) { continue }
+        try {
+            $steam = $steamDirs | Where-Object { $_.AppId -and $g.Path.StartsWith($_.Dir + '\', [StringComparison]::OrdinalIgnoreCase) } | Select-Object -First 1
+            $appId = if ($steam) { $steam.AppId } else { $null }
+            $cached = if ($appId) { Find-SteamCachedCover $appId } else { $null }
+            if ($cached) { Copy-Item -LiteralPath $cached -Destination $target -Force }
+            else {
+                if (-not $appId) { $appId = Find-SteamAppIdByName $g.Name }
+                if (-not ($appId -and (Save-SteamStoreCover $appId $target))) { Set-Content -LiteralPath $miss -Value '' ; continue }
+            }
+            $saved++
+            Write-Log "Capa encontrada: $($g.Name)"
+        } catch {
+            Write-Log "Capa de '$($g.Name)' não encontrada: $($_.Exception.Message)" 'WARN'
+        }
+    }
+    $saved
 }
 
 # ---------------------------------------------------------------- boost
