@@ -120,9 +120,7 @@
   .tweak p { grid-column: 1; color: var(--muted); font-size: 15px; }
   .tweak .state { grid-row: 1; grid-column: 2; font-size: 13px; color: var(--stable); white-space: nowrap; align-self: center; }
   .tweak .state.opt { color: var(--muted); }
-  .games-line { margin-top: 36px; color: var(--muted); font-size: 15px; }
-  .games-line b { color: var(--ink); font-weight: 600; }
-
+    
   /* Vitrine do app */
   .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--panel); margin: 28px 0 22px; --chamfer: 8px; }
   .tab { --chamfer: 6px; background: none; border: 0; color: var(--muted); font: 500 15px "IBM Plex Sans", sans-serif; padding: 9px 18px; cursor: pointer; }
@@ -292,7 +290,7 @@
     <div class="wrap split">
       <div class="split-head">
         <h2>O que o Overclutch muda no seu PC</h2>
-        <p>São 20 ajustes oficiais do Windows. Os recomendados entram no botão Otimizar agora; os opcionais você liga se quiser. Cada um mostra se está ativo no app.</p>
+        <p>São 25 ajustes oficiais do Windows. Os recomendados entram no botão Otimizar agora; os opcionais você liga se quiser. Cada um mostra se está ativo no app.</p>
       </div>
       <div id="tweaks"></div>
     </div>
@@ -301,11 +299,11 @@
   <section>
     <div class="wrap">
       <h2>Feito para entender em dez segundos</h2>
-      <p class="muted" style="margin-top: 14px; max-width: 36em">Um botão para otimizar, uma lista para conferir e uma aba para os seus jogos.</p>
+      <p class="muted" style="margin-top: 14px; max-width: 36em">Um botão para otimizar, uma lista para conferir e uma aba para limpar o PC.</p>
       <div class="tabs chamfer" role="tablist" aria-label="Telas do app">
         <button class="tab chamfer" role="tab" aria-selected="true" data-shot="assets/app-home.png" data-alt="Tela inicial do Overclutch">Início</button>
         <button class="tab chamfer" role="tab" aria-selected="false" data-shot="assets/app-tweaks.png" data-alt="Lista de otimizações do Overclutch">Otimizações</button>
-        <button class="tab chamfer" role="tab" aria-selected="false" data-shot="assets/app-games.png" data-alt="Tela de jogos do Overclutch">Jogos</button>
+        <button class="tab chamfer" role="tab" aria-selected="false" data-shot="assets/app-clean.png" data-alt="Tela de limpeza do Overclutch">Limpeza</button>
       </div>
       <div class="shot chamfer"><img id="shot" class="chamfer" src="assets/app-home.png" alt="Tela inicial do Overclutch" width="2360" height="1520" loading="lazy"></div>
     </div>
@@ -422,6 +420,13 @@
       ["Algoritmo de Nagle desligado", "Pacotes TCP saem na hora, sem esperar para agrupar.", 1],
       ["Repetição de teclado mais rápida", "Menos atraso ao segurar uma tecla.", 0],
     ]],
+    ["Recursos do Windows", [
+      ["Copilot desligado", "Sem o Copilot do Windows e sem o botão dele na barra de tarefas.", 1],
+      ["Widgets desligados", "O painel de notícias e clima para de carregar conteúdo em segundo plano.", 1],
+      ["Recall desligado", "O Windows para de tirar capturas da tela para a linha do tempo de IA.", 1],
+      ["Sobreposição da Game Bar desligada", "Win+G deixa de abrir a Game Bar por cima do jogo.", 0],
+      ["Isolamento de núcleo desligado", "Pode dar alguns FPS, mas desliga uma proteção de segurança. Risco alto.", 0],
+    ]],
     ["Serviços do Windows", [
       ["Telemetria desligada", "Para o serviço que envia dados de uso em segundo plano.", 1],
       ["SysMain desligado", "Menos uso de disco em segundo plano. Indicado para SSD.", 0],
@@ -433,15 +438,14 @@
     <div class="tweak-group"><h3>${esc(group)}</h3>
       ${items.map(([name, desc, rec]) => `
         <div class="tweak"><b>${esc(name)}</b><span class="state ${rec ? "" : "opt"}">${rec ? "Recomendado" : "Opcional"}</span><p>${esc(desc)}</p></div>`).join("")}
-    </div>`).join("") +
-    `<p class="games-line">Boost por jogo detecta sozinho <b>CS2, Valorant, League of Legends, Fortnite, Dota 2, Rocket League, Apex Legends, PUBG, Rainbow Six Siege, GTA V e Roblox</b>, e aceita qualquer outro .exe.</p>`;
+    </div>`).join("") ;
 
   const FAQ = [
     ["É seguro para o meu Windows?", "O Overclutch só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer todas as otimizações volta tudo como era."],
     ["Quanto de FPS eu vou ganhar?", "Depende do PC. Quem usa o Windows como veio de fábrica, notebook ou muitos programas em segundo plano costuma notar mais. Em PCs já ajustados, a diferença aparece mais como estabilidade e menos input lag do que em FPS médio. Meça no mesmo jogo, antes e depois."],
     ["Pode dar ban em jogo com anti-cheat?", "O Overclutch não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente."],
     ["Por que é grátis?", "O projeto está em fase de testes e é de código aberto. Usar, estudar e modificar o código é livre pela licença MIT."],
-    ["Funciona em notebook?", "Sim. O boost por jogo força a placa de vídeo dedicada, o que ajuda em notebooks com duas placas. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
+    ["Funciona em notebook?", "Sim. Os ajustes valem para qualquer PC com Windows 10 ou 11. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
     ["Como desinstalo?", "Pelo Windows, em Configurações, Aplicativos instalados, Overclutch. O desinstalador pergunta se você quer reverter as otimizações antes de remover o programa."],
   ];
   const plus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';

@@ -1,6 +1,6 @@
 ﻿# Interface WPF do Overclutch. Os controles com x:Name no XAML ficam em $script:UI.
 
-$script:Pages = @('Home', 'Tweaks', 'Games', 'Tools', 'Log')
+$script:Pages = @('Home', 'Tweaks', 'Clean', 'Restore', 'Settings')
 $script:TweakRows = @{}
 $script:BrushConverter = New-Object System.Windows.Media.BrushConverter
 
@@ -17,16 +17,14 @@ function Set-Status { param([string]$Text) $script:UI.StatusText.Text = $Text; U
 $script:CoreFile = Join-Path $PSScriptRoot 'Core.ps1'
 
 $script:UpdateFile = Join-Path $PSScriptRoot 'Update.ps1'
-$script:GamesFile  = Join-Path $PSScriptRoot 'Games.ps1'
 
-# PowerShell em outra thread com o Core, Games e Update carregados, pronto para rodar
-# $Body (texto de script que recebe $Progress).
+# PowerShell em outra thread com o Core e o Update carregados, pronto para rodar $Body
+# (texto de script que recebe $Progress).
 function New-BackgroundShell {
     param([string]$Body, $Progress)
     $wrapper = {
-        param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress, $GamesFile)
+        param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress)
         . $CoreFile
-        . $GamesFile
         # Sem o Update.ps1 (instalação incompleta) só a atualização deixa de funcionar.
         if (Test-Path -LiteralPath $UpdateFile) { . $UpdateFile }
         Initialize-Core -DataDir $DataDir -DryRun:$DryRun
@@ -34,7 +32,7 @@ function New-BackgroundShell {
     }
     $ps = [PowerShell]::Create()
     [void]$ps.AddScript($wrapper.ToString()).AddArgument($script:CoreFile).AddArgument($script:UpdateFile).
-        AddArgument($script:Core.DataDir).AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($Progress).AddArgument($script:GamesFile)
+        AddArgument($script:Core.DataDir).AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($Progress)
     $ps
 }
 
@@ -229,121 +227,6 @@ function Build-TweakList {
     }
 }
 
-function New-ImageFromFile {
-    param([string]$Path)
-    # OnLoad lê o arquivo e solta na hora (não trava a capa nem o ícone).
-    $img = New-Object System.Windows.Media.Imaging.BitmapImage
-    $img.BeginInit()
-    $img.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
-    $img.DecodePixelWidth = 496
-    $img.UriSource = [Uri]$Path
-    $img.EndInit()
-    $img.Freeze()
-    $img
-}
-
-function Get-ExeIconSource {
-    param([string]$Exe)
-    try {
-        Add-Type -AssemblyName System.Drawing
-        $ico = [System.Drawing.Icon]::ExtractAssociatedIcon($Exe)
-        $src = [System.Windows.Interop.Imaging]::CreateBitmapSourceFromHIcon($ico.Handle, [System.Windows.Int32Rect]::Empty,
-            [System.Windows.Media.Imaging.BitmapSizeOptions]::FromEmptyOptions())
-        $src.Freeze(); $ico.Dispose()
-        $src
-    } catch { $null }
-}
-
-# Área da capa: a imagem do jogo ou, sem capa, o ícone do .exe sobre um fundo escuro.
-function New-GameCover {
-    param($Game, [bool]$Exists)
-    $cover = New-Object System.Windows.Controls.Border
-    $cover.Height = 116
-    $cover.CornerRadius = New-Object System.Windows.CornerRadius(11, 11, 0, 0)
-    $file = Get-CoverFile $Game.Path
-    $image = $null
-    if (Test-Path -LiteralPath $file) { try { $image = New-ImageFromFile $file } catch { } }
-    if ($image) {
-        $brush = New-Object System.Windows.Media.ImageBrush($image)
-        $brush.Stretch = 'UniformToFill'
-        $cover.Background = $brush
-        return $cover
-    }
-    $cover.Background = New-Brush '#1D1838'
-    $icon = if ($Exists) { Get-ExeIconSource $Game.Path } else { $null }
-    if ($icon) {
-        $img = New-Object System.Windows.Controls.Image
-        $img.Source = $icon; $img.Width = 48; $img.Height = 48
-        $cover.Child = $img
-    } else {
-        $initials = -join (($Game.Name -split '\s+' | Where-Object { $_ } | Select-Object -First 2) | ForEach-Object { $_.Substring(0, 1).ToUpper() })
-        $text = New-Text $initials 30 '#A78BFA' -Bold
-        $text.HorizontalAlignment = 'Center'; $text.VerticalAlignment = 'Center'
-        $cover.Child = $text
-    }
-    $cover
-}
-
-function Build-GameList {
-    $panel = $script:UI.GameList
-    $panel.Children.Clear()
-    if ($script:Games.Count -eq 0) {
-        $empty = New-Text 'Nenhum jogo na lista. Clique em "Detectar jogos instalados" ou adicione um .exe manualmente.' 13
-        $empty.Margin = New-Thickness 2 10 0 0
-        [void]$panel.Children.Add($empty)
-        return
-    }
-    foreach ($g in $script:Games) {
-        $exists = Test-Path -LiteralPath $g.Path
-        $tile = New-Object System.Windows.Controls.Border
-        $tile.Width = 248
-        $tile.Margin = New-Thickness 0 0 14 14
-        $tile.CornerRadius = New-Object System.Windows.CornerRadius(12)
-        $tile.Background = New-Brush '#131A2B'
-        $tile.BorderBrush = New-Brush '#1F2940'
-        $tile.BorderThickness = New-Thickness 1 1 1 1
-        $tile.ToolTip = "$($g.Name)`n$($g.Path)"
-
-        $stack = New-Object System.Windows.Controls.StackPanel
-        [void]$stack.Children.Add((New-GameCover $g $exists))
-
-        $body = New-Object System.Windows.Controls.StackPanel
-        $body.Margin = New-Thickness 14 12 14 14
-        $name = New-Text $g.Name 14 '#FFFFFF' -Bold
-        $name.TextWrapping = 'NoWrap'
-        $name.TextTrimming = 'CharacterEllipsis'
-        [void]$body.Children.Add($name)
-        if (-not $exists) {
-            $missing = New-Text 'Arquivo do jogo não encontrado' 11 '#FBBF24'
-            $missing.Margin = New-Thickness 0 2 0 0
-            [void]$body.Children.Add($missing)
-        }
-
-        $row = New-Object System.Windows.Controls.DockPanel
-        $row.Margin = New-Thickness 0 12 0 0
-        $remove = New-Object System.Windows.Controls.Button
-        $remove.Style = $script:Window.FindResource('SecondaryButton')
-        $remove.Padding = New-Thickness 12 5 12 5
-        $remove.FontSize = 12
-        $remove.Content = 'Remover'
-        $remove.Tag = $g.Path
-        $remove.Add_Click({
-            $path = $this.Tag
-            Invoke-Busy 'Removendo jogo...' { Remove-Game $path }
-        })
-        [System.Windows.Controls.DockPanel]::SetDock($remove, 'Right')
-        [void]$row.Children.Add($remove)
-        $badge = New-Badge
-        $badge.HorizontalAlignment = 'Left'
-        Set-Badge $badge (Test-GameBoosted $g) 'OTIMIZADO' 'NORMAL'
-        [void]$row.Children.Add($badge)
-        [void]$body.Children.Add($row)
-
-        [void]$stack.Children.Add($body)
-        $tile.Child = $stack
-        [void]$panel.Children.Add($tile)
-    }
-}
 function Update-State {
     $active = 0
     foreach ($t in $script:Tweaks) {
@@ -358,11 +241,10 @@ function Update-State {
     Set-ScoreArc $pct
     $script:UI.StatusPillText.Text = "$active de $total ajustes ativos"
     $script:UI.StatActive.Text = "$active de $total"
-    $boosted = @($script:Games | Where-Object { Test-GameBoosted $_ }).Count
-    $script:UI.StatGames.Text = "$boosted de $($script:Games.Count)"
+
     $undo = @(Get-BackedUpIds).Count
     $script:UI.StatUndo.Text = $(if ($undo) { "$undo item(ns)" } else { 'Nada aplicado' })
-    Build-GameList
+    $script:UI.BackupInfo.Text = $(if ($undo) { "O Overclutch guardou os valores originais de $undo item(ns). Desfazer volta todos eles." } else { 'Nenhuma otimização aplicada ainda: não há nada para desfazer.' })
     Set-Status 'Pronto.'
 }
 
@@ -402,14 +284,6 @@ function Invoke-TweakList {
     $reboot
 }
 
-function Invoke-GameBoostAll {
-    foreach ($g in $script:Games) {
-        if (-not (Test-Path -LiteralPath $g.Path)) { continue }
-        Set-Status "Otimizando jogo: $($g.Name)"
-        try { Invoke-GameBoost $g } catch { Write-Log "Falha no jogo '$($g.Name)': $($_.Exception.Message)" 'ERROR' }
-    }
-}
-
 function Register-Handlers {
     foreach ($p in $script:Pages) {
         $script:UI["Nav$p"].Tag = $p
@@ -418,15 +292,15 @@ function Register-Handlers {
 
     $script:UI.BtnBoost.Add_Click({
         $list = @($script:Tweaks | Where-Object { $_.Default })
-        $msg = "Vamos criar um ponto de restauração e aplicar $($list.Count) otimizações recomendadas" +
-               $(if ($script:Games.Count) { " + boost em $($script:Games.Count) jogo(s)" } else { '' }) + ".`n`nContinuar?"
+        $withPoint = [bool](Get-Setting 'RestorePointBeforeBoost')
+        $msg = $(if ($withPoint) { 'Vamos criar um ponto de restauração e aplicar' } else { 'Vamos aplicar' }) + " $($list.Count) otimizações recomendadas.`n`nContinuar?"
         if ((Show-Message $msg 'Question' 'YesNo') -ne 'Yes') { return }
-        Invoke-Busy 'Criando ponto de restauração...' {
-            if (-not (Invoke-RestorePointInBackground)) {
+        Invoke-Busy 'Otimizando...' {
+            if ($withPoint -and -not (Invoke-RestorePointInBackground)) {
                 Write-Log 'Seguindo sem ponto de restauração (o backup interno continua valendo).' 'WARN'
             }
             $reboot = Invoke-TweakList $list
-            Invoke-GameBoostAll
+            Start-RestorePointList
             $end = 'Otimização concluída!'
             if ($reboot) { $end += "`n`nReinicie o PC para todos os ajustes fazerem efeito." }
             Show-Message $end | Out-Null
@@ -464,70 +338,51 @@ function Register-Handlers {
     $script:UI.BtnSelectAll.Add_Click({ foreach ($r in $script:TweakRows.Values) { $r.Check.IsChecked = $true } })
     $script:UI.BtnSelectNone.Add_Click({ foreach ($r in $script:TweakRows.Values) { $r.Check.IsChecked = $false } })
 
-    $script:UI.BtnDetectGames.Add_Click({
-        Invoke-Busy 'Procurando jogos instalados...' {
-            $found = @(Invoke-InBackground 'Procurando jogos na Steam, Epic, Riot, EA, Ubisoft, GOG, Battle.net e Xbox' 'param($p) ,@(Find-InstalledGames)' | ForEach-Object { $_ })
-            $added = @(Add-DetectedGames $found)
-            $msg = if ($added.Count) { "$($added.Count) jogo(s) adicionado(s):`n" + ($added -join "`n") }
-                   elseif ($found.Count) { "Todos os $($found.Count) jogos encontrados já estão na lista." }
-                   else { 'Nenhum jogo encontrado nas lojas. Use "Adicionar .exe manualmente".' }
-            Show-Message $msg | Out-Null
-            Start-CoverFetch
-        }
-    })
-
-    $script:UI.BtnAddGame.Add_Click({
-        $dlg = New-Object Microsoft.Win32.OpenFileDialog
-        $dlg.Title = 'Escolha o executável do jogo'
-        $dlg.Filter = 'Executáveis (*.exe)|*.exe'
-        if ($dlg.ShowDialog($script:Window)) {
-            $name = [System.IO.Path]::GetFileNameWithoutExtension($dlg.FileName)
-            Add-Game $name $dlg.FileName | Out-Null
-            Update-State
-            Start-CoverFetch
-        }
-    })
-
-    $script:UI.BtnBoostGames.Add_Click({
-        if (-not $script:Games.Count) { Show-Message 'Adicione ou detecte jogos primeiro.' | Out-Null; return }
-        Invoke-Busy 'Otimizando jogos...' { Invoke-GameBoostAll }
-    })
-
-    $script:UI.BtnUnboostGames.Add_Click({
-        Invoke-Busy 'Removendo boost dos jogos...' {
-            foreach ($g in $script:Games) { Undo-GameBoost $g }
-        }
-    })
-
-    $script:UI.BtnCleanTemp.Add_Click({
-        Invoke-Busy 'Limpando arquivos temporários...' {
-            $r = Invoke-InBackground 'Limpando arquivos temporários' 'param($p) Clear-TempFiles -Progress $p'
-            $size = Format-Size $r.Bytes
-            $kept = if ($r.Skipped) { "`n$($r.Skipped) arquivo(s) em uso por outros programas foram mantidos." } else { '' }
-            if (Test-DryRun) {
-                Write-Log "[SIMULAÇÃO] Temporários: $($r.Files) arquivos ($size) seriam apagados."
-                Show-Message "Modo simulação: $size seriam liberados ($($r.Files) arquivos). Nada foi apagado." | Out-Null
-            } elseif ($r.Files -eq 0) {
-                Write-Log "Temporários: nada para apagar.$($kept -replace "`n", ' ')"
-                Show-Message "As pastas temporárias já estão limpas.$kept" | Out-Null
-            } else {
-                Write-Log "Temporários: $($r.Files) arquivos apagados ($size).$($kept -replace "`n", ' ')"
-                Show-Message "$size liberados ($($r.Files) arquivos).$kept" | Out-Null
-            }
-        }
-    })
-
-    $script:UI.BtnFlushDns.Add_Click({ Invoke-Busy 'Limpando DNS...' { Clear-Dns; Show-Message 'Cache DNS limpo.' | Out-Null } })
-
     $script:UI.BtnRestorePoint.Add_Click({
         Invoke-Busy 'Criando ponto de restauração (pode levar alguns minutos)...' {
             if (Invoke-RestorePointInBackground) { Show-Message 'Ponto de restauração criado.' | Out-Null }
-            else { Show-Message 'Não foi possível criar o ponto (o Windows permite só um a cada 24h). Veja o Registro.' 'Warning' | Out-Null }
+            else { Show-Message 'Não foi possível criar o ponto: o Windows permite só um a cada 24 horas, ou a Proteção do Sistema está desligada.' 'Warning' | Out-Null }
+            Start-RestorePointList
         }
     })
 
     $script:UI.BtnOpenRestore.Add_Click({ Start-Process 'rstrui.exe' })
+    $script:UI.BtnUndoAllRestore.Add_Click({ $script:UI.BtnUndoAll.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
     $script:UI.BtnOpenData.Add_Click({ Start-Process 'explorer.exe' $script:Core.DataDir })
+    $script:UI.BtnOpenLog.Add_Click({
+        if (Test-Path -LiteralPath $script:Core.LogFile) { Start-Process 'notepad.exe' $script:Core.LogFile }
+        else { Show-Message 'O registro ainda está vazio.' | Out-Null }
+    })
+
+    # Limpeza: um botão por item e o "Limpar tudo".
+    foreach ($pair in @(@('BtnCleanTemp', 'temp'), @('BtnCleanThumbs', 'thumbs'), @('BtnCleanUpdate', 'update'), @('BtnCleanBin', 'bin'))) {
+        $script:UI[$pair[0]].Tag = $pair[1]
+        $script:UI[$pair[0]].Add_Click({ $id = $this.Tag; Invoke-Busy 'Limpando...' { Show-CleanupResult @(Invoke-Cleanup $id) } })
+    }
+    $script:UI.BtnFlushDns.Add_Click({ Invoke-Busy 'Limpando DNS...' { Clear-Dns; Show-Message 'Cache DNS limpo.' | Out-Null } })
+    $script:UI.BtnCleanAll.Add_Click({
+        if ((Show-Message "Limpar temporários, miniaturas, cache do Windows Update, Lixeira e DNS?" 'Question' 'YesNo') -ne 'Yes') { return }
+        Invoke-Busy 'Limpando tudo...' {
+            $results = @(foreach ($id in $script:CleanupTargets.Keys) { Invoke-Cleanup $id })
+            Clear-Dns
+            Show-CleanupResult $results -WithDns
+        }
+    })
+
+    # Configurações
+    $script:UI.ToggleCheckUpdates.IsChecked = [bool](Get-Setting 'CheckUpdates')
+    $script:UI.ToggleRestoreBefore.IsChecked = [bool](Get-Setting 'RestorePointBeforeBoost')
+    $script:UI.ToggleCheckUpdates.Add_Click({ Set-Setting 'CheckUpdates' ([bool]$this.IsChecked) })
+    $script:UI.ToggleRestoreBefore.Add_Click({ Set-Setting 'RestorePointBeforeBoost' ([bool]$this.IsChecked) })
+
+    # Redes sociais e GitHub (link vazio em $script:Links esconde o ícone).
+    foreach ($name in $script:Links.Keys) {
+        foreach ($btn in @($script:UI["Link$name"], $script:UI["About$name"]) | Where-Object { $_ }) {
+            $btn.Tag = $script:Links[$name]
+            $btn.Visibility = $(if ($script:Links[$name]) { 'Visible' } else { 'Collapsed' })
+            $btn.Add_Click({ if ($this.Tag -match '^https://') { Start-Process $this.Tag } })
+        }
+    }
 
     $script:UI.BtnUpdateNow.Add_Click({ Invoke-UpdateNow })
     $script:UI.BtnUpdateLater.Add_Click({ $script:UI.UpdateBanner.Visibility = 'Collapsed' })
@@ -547,32 +402,68 @@ function Register-Handlers {
     })
 }
 
-# ---------------------------------------------------------------- jogos
+# ---------------------------------------------------------------- limpeza
 
-# Ao abrir: procura jogos novos em segundo plano e já coloca na lista (menos os que o
-# usuário removeu de propósito).
-function Start-GameScan {
-    Start-InBackground 'param($p) ,@(Find-InstalledGames)' {
-        param($found, $err)
-        if ($err) { Write-Log "Busca de jogos falhou: $err" 'WARN'; return }
-        $added = @(Add-DetectedGames $found -Automatic)
-        if ($added.Count) {
-            Write-Log "$($added.Count) jogo(s) novo(s) encontrado(s): $($added -join ', ')."
-            Update-State   # lista de jogos e contagem "Jogos otimizados" do Painel
+# Itens da aba Limpeza. Body roda em segundo plano e devolve Files/Bytes/Skipped.
+$script:CleanupTargets = [ordered]@{
+    temp   = @{ Name = 'Arquivos temporários';      Body = 'param($p) Clear-TempFiles -Progress $p' }
+    thumbs = @{ Name = 'Cache de miniaturas';       Body = 'param($p) Clear-ThumbnailCache' }
+    update = @{ Name = 'Cache do Windows Update';   Body = 'param($p) Clear-WindowsUpdateCache' }
+    bin    = @{ Name = 'Lixeira';                    Body = 'param($p) Clear-RecycleBinSafe' }
+}
+
+function Invoke-Cleanup {
+    param([string]$Id)
+    $target = $script:CleanupTargets[$Id]
+    $r = Invoke-InBackground "Limpando: $($target.Name)" $target.Body
+    [pscustomobject]@{ Name = $target.Name; Files = [int]$r.Files; Bytes = [long]$r.Bytes; Skipped = [int]$r.Skipped }
+}
+
+function Show-CleanupResult {
+    param($Results, [switch]$WithDns)
+    $lines = foreach ($r in @($Results)) {
+        $detail = if ($r.Files) { "$(Format-Size $r.Bytes) ($($r.Files) itens)" } else { 'já estava limpo' }
+        if ($r.Skipped) { $detail += ", $($r.Skipped) em uso mantidos" }
+        "$($r.Name): $detail"
+    }
+    if ($WithDns) { $lines = @($lines) + 'Cache DNS: limpo' }
+    $total = (@($Results) | Measure-Object Bytes -Sum).Sum
+    $head = if (Test-DryRun) { "Modo simulação: $(Format-Size $total) seriam liberados. Nada foi apagado." } else { "$(Format-Size $total) liberados." }
+    Write-Log "Limpeza: $head $($lines -join '; ')"
+    Show-Message ($head + "`n`n" + ($lines -join "`n")) | Out-Null
+}
+
+# ---------------------------------------------------------------- restauração
+
+# Lista os pontos de restauração do Windows na aba Restauração e o último no Painel.
+function Start-RestorePointList {
+    Start-InBackground 'param($p) ,@(Get-RestorePoints)' {
+        param($points, $err)
+        $points = @($points | ForEach-Object { $_ } | Where-Object { $_ })
+        $list = $script:UI.RestoreList
+        $list.Children.Clear()
+        if (-not $points.Count) {
+            [void]$list.Children.Add((New-Text 'Nenhum ponto de restauração encontrado. Crie um antes de mudanças grandes.' 13))
+            $script:UI.StatRestore.Text = 'Nenhum'
+            return
         }
-        Start-CoverFetch
+        foreach ($pt in $points | Select-Object -First 8) {
+            $row = New-Object System.Windows.Controls.Grid
+            $row.Height = 44
+            $name = New-Text $pt.Description 13.5 '#FFFFFF'
+            $name.VerticalAlignment = 'Center'; $name.TextTrimming = 'CharacterEllipsis'; $name.TextWrapping = 'NoWrap'
+            $name.Margin = New-Thickness 0 0 160 0
+            $date = New-Text ($pt.Date.ToString('dd/MM/yyyy HH:mm')) 13 '#8C97AE'
+            $date.HorizontalAlignment = 'Right'; $date.VerticalAlignment = 'Center'
+            [void]$row.Children.Add($name); [void]$row.Children.Add($date)
+            [void]$list.Children.Add($row)
+            $line = New-Object System.Windows.Controls.Border
+            $line.Height = 1; $line.Background = New-Brush '#1F2940'
+            [void]$list.Children.Add($line)
+        }
+        $script:UI.StatRestore.Text = $points[0].Date.ToString('dd/MM/yyyy HH:mm')
     }
 }
-
-# Busca as capas que faltam (cache da Steam ou loja da Steam) e redesenha os cartões.
-function Start-CoverFetch {
-    Start-InBackground 'param($p) Update-GameCovers' {
-        param($saved, $err)
-        if ($err) { Write-Log "Busca de capas falhou: $err" 'WARN'; return }
-        if ($saved) { Build-GameList }
-    }
-}
-
 # ---------------------------------------------------------------- atualização
 
 function Show-UpdateBanner {
@@ -675,6 +566,17 @@ function Set-TaskbarIdentity {
     } catch { }
 }
 
+# Poppins vem em assets\fonts (licença OFL). Sem os arquivos, fica a fonte do Windows.
+function Set-AppFont {
+    $dir = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\fonts'
+    if (-not (Test-Path -LiteralPath (Join-Path $dir 'Poppins-Regular.ttf'))) { return }
+    try {
+        $family = New-Object System.Windows.Media.FontFamily(([Uri]('file:///' + ($dir -replace '\\', '/') + '/')), './#Poppins')
+        $script:Window.FontFamily = $family
+        $script:Window.Resources['Display'] = $family
+    } catch { }
+}
+
 # Barra de título própria: minimizar, maximizar e fechar. Maximizada, a janela sem
 # moldura passa um pouco da tela; a margem compensa.
 function Register-WindowChrome {
@@ -719,6 +621,7 @@ function Start-App {
     }
 
     $script:UI.VersionText.Text = "v$($script:AppVersion)"
+    Set-AppFont
     $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.png'
     if (Test-Path -LiteralPath $iconFile) {
         # CacheOption OnLoad lê o arquivo inteiro e solta na hora; sem isso o PNG fica
@@ -732,6 +635,7 @@ function Start-App {
             $img.Freeze()
             $script:Window.Icon = $img
             $script:UI.TitleLogo.Source = $img
+            $script:UI.AboutLogo.Source = $img
         } catch { }
     }
     if (Test-DryRun) {
@@ -740,29 +644,23 @@ function Start-App {
         $script:UI.ModeBadge.Visibility = 'Visible'
         $script:Window.Title = "$($script:AppName) (simulação)"
     } else {
-        $script:UI.ModeText.Text = 'Executando como administrador'
+        $script:UI.ModeText.Text = 'Modo administrador'
     }
     $first = ("$env:USERNAME" -split '[\s._-]')[0]
     $script:UI.GreetingText.Text = $(if ($first) { "Olá, " + $first.Substring(0, 1).ToUpper() + $first.Substring(1) } else { 'Olá' })
     Register-WindowChrome
 
-    $script:Core.OnLog = {
-        param($line)
-        $script:UI.LogBox.AppendText("$line`r`n")
-        $script:UI.LogBox.ScrollToEnd()
-    }
-
     Start-SystemInfo
+    Start-RestorePointList
 
-    Import-Games
     Build-TweakList
     Register-Handlers
     Show-Page 'Home'
     Update-State
     Write-Log "$($script:AppName) $($script:AppVersion) iniciado$(if (Test-DryRun) { ' em modo simulação' })."
     $script:UI.UpdateInfo.Text = "Versão instalada: $($script:AppVersion). Confere no GitHub se há uma mais nova."
-    Start-UpdateCheck
-    Start-GameScan
+    $script:UI.AboutVersion.Text = "Overclutch $($script:AppVersion)"
+    if (Get-Setting 'CheckUpdates') { Start-UpdateCheck } else { $script:UI.StatUpdate.Text = 'Verificação desligada' }
 
     [void]$script:Window.ShowDialog()
 }

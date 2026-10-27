@@ -62,6 +62,10 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs
 Source: "..\assets\overclutch.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "..\assets\overclutch.png"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\fonts\*"; DestDir: "{app}\assets\fonts"; Flags: ignoreversion
+
+[InstallDelete]
+Type: files; Name: "{app}\src\Games.ps1"
 
 [Icons]
 ; AppUserModelID igual ao que o app define em src\UI.ps1: a barra de tarefas mostra o ícone do Overclutch.

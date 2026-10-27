@@ -285,6 +285,87 @@ function Format-Size {
     '{0:N0} KB' -f [math]::Ceiling($Bytes / 1KB)
 }
 
+# Cache de miniaturas e ícones do Explorer. Os arquivos em uso pelo Explorer ficam;
+# o Windows recria o cache sozinho.
+function Clear-ThumbnailCache {
+    $dir = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Explorer'
+    $freed = [long]0; $files = 0; $skipped = 0
+    foreach ($f in @(Get-ChildItem -LiteralPath $dir -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'thumbcache_*.db' -or $_.Name -like 'iconcache_*.db' })) {
+        if (Test-DryRun) { $freed += $f.Length; $files++; continue }
+        try { $len = $f.Length; $f.Delete(); $freed += $len; $files++ } catch { $skipped++ }
+    }
+    [pscustomobject]@{ MB = [math]::Round($freed / 1MB, 1); Bytes = $freed; Files = $files; Skipped = $skipped }
+}
+
+# Atualizações do Windows já baixadas e instaladas. O Windows baixa de novo se precisar.
+function Clear-WindowsUpdateCache {
+    Clear-TempFiles -Paths @(Join-Path $env:SystemRoot 'SoftwareDistribution\Download')
+}
+
+function Get-RecycleBinInfo {
+    $count = 0; $bytes = [long]0
+    try {
+        $bin = (New-Object -ComObject Shell.Application).Namespace(10)
+        foreach ($item in @($bin.Items())) { $count++; try { $bytes += [long]$item.Size } catch { } }
+    } catch { }
+    [pscustomobject]@{ Files = $count; Bytes = $bytes; MB = [math]::Round($bytes / 1MB, 1); Skipped = 0 }
+}
+
+function Clear-RecycleBinSafe {
+    $info = Get-RecycleBinInfo
+    if (-not (Test-DryRun) -and $info.Files) { Clear-RecycleBin -Force -ErrorAction SilentlyContinue }
+    $info
+}
+
+# Pontos de restauração do Windows, do mais novo para o mais antigo.
+function Get-RestorePoints {
+    try {
+        @(Get-ComputerRestorePoint -ErrorAction Stop | Sort-Object SequenceNumber -Descending | ForEach-Object {
+            [pscustomobject]@{
+                Description = "$($_.Description)"
+                Date = [Management.ManagementDateTimeConverter]::ToDateTime($_.CreationTime)
+                Number = $_.SequenceNumber
+            }
+        })
+    } catch { @() }
+}
+
+# ---------------------------------------------------------------- configurações
+
+$script:DefaultSettings = @{ CheckUpdates = $true; RestorePointBeforeBoost = $true }
+
+function Get-SettingsFile { Join-Path $script:Core.DataDir 'settings.json' }
+
+function Get-Setting {
+    param([string]$Name)
+    $file = Get-SettingsFile
+    if (Test-Path -LiteralPath $file) {
+        try {
+            $data = Get-Content -LiteralPath $file -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($data.PSObject.Properties[$Name]) { return $data.$Name }
+        } catch { }
+    }
+    $script:DefaultSettings[$Name]
+}
+
+function Set-Setting {
+    param([string]$Name, $Value)
+    $all = @{}
+    $file = Get-SettingsFile
+    if (Test-Path -LiteralPath $file) {
+        try { (Get-Content -LiteralPath $file -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $all[$_.Name] = $_.Value } } catch { }
+    }
+    $all[$Name] = $Value
+    ConvertTo-Json -InputObject $all | Set-Content -LiteralPath $file -Encoding UTF8
+}
+
+# Links do rodapé do menu. Link vazio = ícone escondido.
+$script:Links = [ordered]@{
+    Instagram = ''
+    YouTube   = ''
+    Discord   = ''
+    GitHub    = 'https://github.com/freitasscaio/overclutch'
+}
 function Clear-Dns {
     if (Test-DryRun) { Write-Log '[SIMULAÇÃO] Limpar cache DNS'; return }
     try { Clear-DnsClientCache -ErrorAction Stop } catch { ipconfig /flushdns | Out-Null }

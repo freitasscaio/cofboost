@@ -7,9 +7,10 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 ## Recursos
 
 - **Otimizar agora (1 clique):** cria um ponto de restauração e aplica as otimizações recomendadas.
-- **20 otimizações** em 5 categorias (Sistema, Jogos, Latência e Input, Rede, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
-- **Boost por jogo:** ao abrir, o app encontra sozinho os jogos instalados pela **Steam** (todas as bibliotecas), **Epic**, **Riot**, **EA**, **Ubisoft**, **GOG**, **Battle.net** e **Xbox/Game Pass**, escolhe o `.exe` do jogo (ignorando launchers, anti-cheat, instaladores e versões de teste) e coloca na lista, com a capa do jogo (do cache da Steam ou da loja da Steam). Para cada um, força a GPU dedicada e a prioridade alta de CPU. Jogos removidos da lista não voltam sozinhos.
-- **Ferramentas:** limpar arquivos temporários, limpar o cache DNS, criar um ponto de restauração.
+- **25 otimizações** em 6 categorias (Sistema, Jogos, Latência e Input, Rede, Recursos do Windows, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
+- **Limpeza:** arquivos temporários, cache de miniaturas, cache do Windows Update, Lixeira e cache DNS, um por um ou tudo de uma vez.
+- **Restauração:** cria e lista pontos de restauração do Windows e desfaz as otimizações do Overclutch.
+- **Configurações:** verificar atualizações ao abrir, criar ponto de restauração antes de otimizar, dados e registro.
 - **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\Overclutch\backup.json`, e cada ajuste volta exatamente ao que era.
 - **Modo simulação** (`Simular.bat`): mostra no Registro tudo o que seria alterado, sem mudar nada.
 - **Atualização pelo app:** ao abrir, o app consulta o GitHub Releases. Se houver uma versão nova, aparece uma faixa com **Atualizar agora**: o app baixa o instalador oficial, confere o SHA-256 publicado pelo GitHub, instala e reabre. Também dá para verificar em **Ferramentas > Verificar atualizações**.
@@ -72,6 +73,11 @@ O site baixa sempre de `releases/latest/download/Overclutch-Setup.exe`, então n
 | Latência e Input | Repetição de teclado mais rápida | |
 | Rede | NetworkThrottlingIndex desativado | ✔ |
 | Rede | Desativar o algoritmo de Nagle | ✔ |
+| Recursos do Windows | Desativar Copilot | ✔ |
+| Recursos do Windows | Desativar Widgets | ✔ |
+| Recursos do Windows | Desativar Recall | ✔ |
+| Recursos do Windows | Desativar sobreposição da Xbox Game Bar | |
+| Recursos do Windows | Desativar isolamento de núcleo (risco alto) | |
 | Serviços | Desativar telemetria (DiagTrack) | ✔ |
 | Serviços | Desativar SysMain | |
 | Serviços | Desativar o Windows Search | |
@@ -89,12 +95,11 @@ Simular.bat         abre em modo simulação
 install.ps1         instalação rápida para desenvolvimento
 build.ps1           testes + instalador (dist\Overclutch-Setup.exe)
 installer/          script do Inno Setup
-assets/             ícone do app
+assets/             ícone do app e fonte Poppins (licença OFL, assets/fonts/OFL.txt)
 tools/make-icon.ps1 gera o ícone
 site/               site do projeto
 src/Core.ps1        backup, registro, log, ponto de restauração, limpeza
 src/Tweaks.ps1      catálogo de otimizações
-src/Games.ps1       detecção de jogos e boost por executável
 src/Update.ps1      verificação e instalação de atualizações (GitHub Releases)
 src/UI.ps1          lógica da interface
 src/MainWindow.xaml layout da interface (WPF)

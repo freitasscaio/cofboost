@@ -10,7 +10,7 @@
   </WindowChrome.WindowChrome>
 
   <Window.Resources>
-    <FontFamily x:Key="Display">Bahnschrift, Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="Display">Segoe UI Variable Display, Segoe UI</FontFamily>
     <SolidColorBrush x:Key="Panel" Color="#131A2B"/>
     <SolidColorBrush x:Key="PanelBorder" Color="#1F2940"/>
     <SolidColorBrush x:Key="Muted" Color="#8C97AE"/>
@@ -141,6 +141,48 @@
       </Setter>
     </Style>
 
+    <Style x:Key="SocialButton" TargetType="Button">
+      <Setter Property="Width" Value="34"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="Foreground" Value="#7C88A3"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="9">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="#18203A"/>
+                <Setter Property="Foreground" Value="#C4B5FD"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="Toggle" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="Track" Width="46" Height="26" CornerRadius="13" Background="#26314B">
+              <Ellipse x:Name="Knob" Width="20" Height="20" Fill="#C9D2E6" HorizontalAlignment="Left" Margin="3,0"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="#8B5CF6"/>
+                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="Knob" Property="Fill" Value="White"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style x:Key="SelectBox" TargetType="CheckBox">
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -182,13 +224,13 @@
     </Style>
 
     <Style x:Key="H1" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+      <Setter Property="FontFamily" Value="{DynamicResource Display}"/>
       <Setter Property="FontSize" Value="28"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="White"/>
     </Style>
     <Style x:Key="H2" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+      <Setter Property="FontFamily" Value="{DynamicResource Display}"/>
       <Setter Property="FontSize" Value="17"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="White"/>
@@ -262,7 +304,7 @@
       <Grid Grid.Row="0" Background="#0A0F1B">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
           <Image x:Name="TitleLogo" Width="22" Height="22"/>
-          <TextBlock Text="Overclutch" FontFamily="{StaticResource Display}" FontWeight="SemiBold" FontSize="15" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center"/>
+          <TextBlock Text="Overclutch" FontFamily="{DynamicResource Display}" FontWeight="SemiBold" FontSize="15" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center"/>
           <Border x:Name="ModeBadge" CornerRadius="6" Padding="8,2" Margin="12,0,0,0" Background="#3A2A0A" Visibility="Collapsed" VerticalAlignment="Center">
             <TextBlock Text="Modo simulação" Foreground="#FBBF24" FontSize="11.5" FontWeight="SemiBold"/>
           </Border>
@@ -290,7 +332,22 @@
         <Border Grid.Column="0" Background="#0A0F1B" BorderBrush="#161E32" BorderThickness="0,0,1,0">
           <DockPanel Margin="0,14,0,0">
             <StackPanel DockPanel.Dock="Bottom" Margin="22,0,22,20">
-              <TextBlock x:Name="ModeText" Text="Executando como administrador" FontSize="11.5" Foreground="#5BF0B0" TextWrapping="Wrap"/>
+              <!-- Redes sociais: link vazio em $script:Links (Core.ps1) esconde o ícone -->
+              <StackPanel Orientation="Horizontal" Margin="-6,0,0,12">
+                <Button x:Name="LinkInstagram" Style="{StaticResource SocialButton}" ToolTip="Instagram">
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M7 3 H17 A4 4 0 0 1 21 7 V17 A4 4 0 0 1 17 21 H7 A4 4 0 0 1 3 17 V7 A4 4 0 0 1 7 3 Z M8 12 A4 4 0 1 0 16 12 A4 4 0 1 0 8 12 Z M17.4 6.6 H17.5"/></Grid></Viewbox>
+                </Button>
+                <Button x:Name="LinkYouTube" Style="{StaticResource SocialButton}" ToolTip="YouTube">
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M4 6.5 C7 5.6 17 5.6 20 6.5 C21.3 6.9 21.8 8.5 21.8 12 C21.8 15.5 21.3 17.1 20 17.5 C17 18.4 7 18.4 4 17.5 C2.7 17.1 2.2 15.5 2.2 12 C2.2 8.5 2.7 6.9 4 6.5 Z M10 9 L15 12 L10 15 Z"/></Grid></Viewbox>
+                </Button>
+                <Button x:Name="LinkDiscord" Style="{StaticResource SocialButton}" ToolTip="Discord">
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M8.5 5.5 C6.6 5.9 5.1 6.5 3.8 7.4 C2.1 10.2 1.6 13.2 2.1 16.2 C3.6 17.4 5.2 18.1 6.9 18.5 L8 16.6 M16 16.6 L17.1 18.5 C18.8 18.1 20.4 17.4 21.9 16.2 C22.4 13.2 21.9 10.2 20.2 7.4 C18.9 6.5 17.4 5.9 15.5 5.5 M6.6 16 C10 17.6 14 17.6 17.4 16 M7.4 7.3 C10.4 6.3 13.6 6.3 16.6 7.3 M7.9 12.3 A1.3 1.3 0 1 0 10.5 12.3 A1.3 1.3 0 1 0 7.9 12.3 Z M13.5 12.3 A1.3 1.3 0 1 0 16.1 12.3 A1.3 1.3 0 1 0 13.5 12.3 Z"/></Grid></Viewbox>
+                </Button>
+                <Button x:Name="LinkGitHub" Style="{StaticResource SocialButton}" ToolTip="Código no GitHub">
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M9 8 L5 12 L9 16 M15 8 L19 12 L15 16"/></Grid></Viewbox>
+                </Button>
+              </StackPanel>
+              <TextBlock x:Name="ModeText" Text="Modo administrador" FontSize="11.5" Foreground="#5BF0B0" TextWrapping="Wrap"/>
               <TextBlock x:Name="VersionText" Text="v1.0.0" FontSize="11.5" Foreground="#5D6883" Margin="0,4,0,0"/>
             </StackPanel>
             <StackPanel>
@@ -306,22 +363,22 @@
                   <TextBlock Text="Otimizações" Margin="12,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="NavGames" Style="{StaticResource NavButton}">
+              <Button x:Name="NavClean" Style="{StaticResource NavButton}">
                 <StackPanel Orientation="Horizontal">
-                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M7 6 H17 A4 4 0 0 1 21 10 L21.8 15.5 A2.6 2.6 0 0 1 17.2 17.6 L15.5 15.5 H8.5 L6.8 17.6 A2.6 2.6 0 0 1 2.2 15.5 L3 10 A4 4 0 0 1 7 6 Z M7 10 V13 M5.5 11.5 H8.5 M15.5 11 H15.6 M17.5 12.5 H17.6"/></Grid></Viewbox>
-                  <TextBlock Text="Jogos" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M11 3 L12.8 8.2 L18 10 L12.8 11.8 L11 17 L9.2 11.8 L4 10 L9.2 8.2 Z M18.5 14.5 L19.3 16.7 L21.5 17.5 L19.3 18.3 L18.5 20.5 L17.7 18.3 L15.5 17.5 L17.7 16.7 Z"/></Grid></Viewbox>
+                  <TextBlock Text="Limpeza" Margin="12,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="NavTools" Style="{StaticResource NavButton}">
+              <Button x:Name="NavRestore" Style="{StaticResource NavButton}">
                 <StackPanel Orientation="Horizontal">
-                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M3 6 H21 M8 6 V4 H16 V6 M6 6 L7 20 H17 L18 6 M10 10 V16 M14 10 V16"/></Grid></Viewbox>
-                  <TextBlock Text="Ferramentas" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M12 3 L4 6 V12 C4 16.5 7.4 20.3 12 21 C16.6 20.3 20 16.5 20 12 V6 Z M9 12 L11 14 L15 10"/></Grid></Viewbox>
+                  <TextBlock Text="Restauração" Margin="12,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
               </Button>
-              <Button x:Name="NavLog" Style="{StaticResource NavButton}">
+              <Button x:Name="NavSettings" Style="{StaticResource NavButton}">
                 <StackPanel Orientation="Horizontal">
-                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M14 3 H6 V21 H18 V7 Z M14 3 V7 H18 M9 12 H15 M9 16 H15"/></Grid></Viewbox>
-                  <TextBlock Text="Registro" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                  <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Data="M4 6 H13 M17 6 H20 M4 12 H7 M11 12 H20 M4 18 H15 M19 18 H20 M15 4 V8 M9 10 V14 M17 16 V20"/></Grid></Viewbox>
+                  <TextBlock Text="Configurações" Margin="12,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
               </Button>
             </StackPanel>
@@ -392,7 +449,7 @@
                         </Path.Stroke>
                       </Path>
                       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock x:Name="ScoreText" Text="0%" FontFamily="{StaticResource Display}" FontSize="30" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="ScoreText" Text="0%" FontFamily="{DynamicResource Display}" FontSize="30" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center"/>
                         <TextBlock Text="otimizado" FontSize="11.5" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
                       </StackPanel>
                     </Grid>
@@ -506,7 +563,7 @@
                       </StackPanel>
                       <Grid Height="38"><TextBlock Style="{StaticResource RowLabel}" Text="Ajustes ativos"/><TextBlock x:Name="StatActive" Style="{StaticResource RowValue}" Text="..."/></Grid>
                       <Border Height="1" Background="#1F2940"/>
-                      <Grid Height="38"><TextBlock Style="{StaticResource RowLabel}" Text="Jogos otimizados"/><TextBlock x:Name="StatGames" Style="{StaticResource RowValue}" Text="..."/></Grid>
+                      <Grid Height="38"><TextBlock Style="{StaticResource RowLabel}" Text="Último ponto de restauração"/><TextBlock x:Name="StatRestore" Style="{StaticResource RowValue}" Text="..."/></Grid>
                       <Border Height="1" Background="#1F2940"/>
                       <Grid Height="38"><TextBlock Style="{StaticResource RowLabel}" Text="Podem ser desfeitos"/><TextBlock x:Name="StatUndo" Style="{StaticResource RowValue}" Text="..."/></Grid>
                       <Border Height="1" Background="#1F2940"/>
@@ -535,28 +592,21 @@
               </ScrollViewer>
             </DockPanel>
 
-            <!-- Jogos -->
-            <DockPanel x:Name="PageGames" Visibility="Collapsed">
-              <StackPanel DockPanel.Dock="Top" Margin="0,0,10,0">
-                <TextBlock Style="{StaticResource H1}" Text="Jogos"/>
-                <TextBlock Style="{StaticResource Sub}" Text="Os jogos instalados aparecem sozinhos. O boost força a placa de vídeo dedicada e a prioridade alta de CPU sempre que o jogo abrir."/>
-                <WrapPanel Margin="0,0,0,8">
-                  <Button x:Name="BtnBoostGames" Style="{StaticResource PrimaryButton}" Content="Otimizar todos os jogos" Margin="0,0,10,8"/>
-                  <Button x:Name="BtnDetectGames" Style="{StaticResource SecondaryButton}" Content="Detectar jogos instalados" Margin="0,0,10,8"/>
-                  <Button x:Name="BtnAddGame" Style="{StaticResource SecondaryButton}" Content="Adicionar .exe manualmente" Margin="0,0,10,8"/>
-                  <Button x:Name="BtnUnboostGames" Style="{StaticResource SecondaryButton}" Content="Remover boost dos jogos" Margin="0,0,10,8"/>
-                </WrapPanel>
-              </StackPanel>
-              <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <WrapPanel x:Name="GameList" Margin="0,4,0,16"/>
-              </ScrollViewer>
-            </DockPanel>
-
-            <!-- Ferramentas -->
-            <ScrollViewer x:Name="PageTools" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <!-- Limpeza -->
+            <ScrollViewer x:Name="PageClean" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
               <StackPanel Margin="0,0,0,16">
-                <TextBlock Style="{StaticResource H1}" Text="Ferramentas"/>
-                <TextBlock Style="{StaticResource Sub}" Text="Manutenção rápida, restauração e atualizações."/>
+                <DockPanel>
+                  <Button x:Name="BtnCleanAll" DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" VerticalAlignment="Top">
+                    <StackPanel Orientation="Horizontal">
+                      <Viewbox Width="16" Height="16"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="White" StrokeThickness="2.2" Data="M11 3 L12.8 8.2 L18 10 L12.8 11.8 L11 17 L9.2 11.8 L4 10 L9.2 8.2 Z"/></Grid></Viewbox>
+                      <TextBlock Text="Limpar tudo" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource H1}" Text="Limpeza"/>
+                    <TextBlock Style="{StaticResource Sub}" Text="Libera espaço e tira do caminho arquivos que o Windows acumula. Arquivos em uso são mantidos."/>
+                  </StackPanel>
+                </DockPanel>
                 <UniformGrid Columns="2">
                   <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
                     <DockPanel>
@@ -564,34 +614,80 @@
                         <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#F5B14C" Data="M3 6 H21 M8 6 V4 H16 V6 M6 6 L7 20 H17 L18 6 M10 10 V16 M14 10 V16"/></Grid></Viewbox>
                       </Border>
                       <StackPanel Margin="16,0,0,0">
-                        <TextBlock Style="{StaticResource H2}" Text="Limpar arquivos temporários"/>
-                        <TextBlock Text="Apaga o conteúdo das pastas TEMP do usuário e do Windows. Arquivos em uso são mantidos." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button x:Name="BtnCleanTemp" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar agora"/>
+                        <TextBlock Style="{StaticResource H2}" Text="Arquivos temporários"/>
+                        <TextBlock Text="Pastas TEMP do usuário e do Windows: sobras de instalações e programas." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnCleanTemp" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar"/>
                       </StackPanel>
                     </DockPanel>
                   </Border>
                   <Border Style="{StaticResource CardStyle}" Margin="8,0,0,16">
                     <DockPanel>
-                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#172748" VerticalAlignment="Top">
-                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#60A5FA" Data="M12 3 A9 9 0 1 0 12 21 A9 9 0 1 0 12 3 Z M3 12 H21 M12 3 C14.5 5.7 15.8 8.7 15.8 12 C15.8 15.3 14.5 18.3 12 21 M12 3 C9.5 5.7 8.2 8.7 8.2 12 C8.2 15.3 9.5 18.3 12 21"/></Grid></Viewbox>
+                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#2A1830" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#F472B6" Data="M3 5 H21 V19 H3 Z M3 15 L8 10 L13 15 M12 14 L15 11 L21 17 M15.5 8 H15.6"/></Grid></Viewbox>
                       </Border>
                       <StackPanel Margin="16,0,0,0">
-                        <TextBlock Style="{StaticResource H2}" Text="Limpar cache DNS"/>
-                        <TextBlock Text="Resolve problemas de conexão com servidores de jogo que mudaram de endereço." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button x:Name="BtnFlushDns" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar DNS"/>
+                        <TextBlock Style="{StaticResource H2}" Text="Cache de miniaturas"/>
+                        <TextBlock Text="Miniaturas e ícones que o Explorer guarda. O Windows recria sozinho quando precisa." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnCleanThumbs" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar"/>
                       </StackPanel>
                     </DockPanel>
                   </Border>
                   <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
                     <DockPanel>
+                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#26193F" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#C084FC" Data="M12 3 V15 M7 10 L12 15 L17 10 M4 19 H20"/></Grid></Viewbox>
+                      </Border>
+                      <StackPanel Margin="16,0,0,0">
+                        <TextBlock Style="{StaticResource H2}" Text="Cache do Windows Update"/>
+                        <TextBlock Text="Atualizações já baixadas e instaladas. Costuma ocupar bastante espaço." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnCleanUpdate" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+                  <Border Style="{StaticResource CardStyle}" Margin="8,0,0,16">
+                    <DockPanel>
                       <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#12302A" VerticalAlignment="Top">
-                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#5BF0B0" Data="M12 3 L4 6 V12 C4 16.5 7.4 20.3 12 21 C16.6 20.3 20 16.5 20 12 V6 Z M9 12 L11 14 L15 10"/></Grid></Viewbox>
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#5BF0B0" Data="M4 7 H20 L18.5 20 H5.5 Z M2 7 H22 M9 3 H15 M9 11 V16 M15 11 V16"/></Grid></Viewbox>
+                      </Border>
+                      <StackPanel Margin="16,0,0,0">
+                        <TextBlock Style="{StaticResource H2}" Text="Lixeira"/>
+                        <TextBlock Text="Esvazia a Lixeira de todos os discos. Depois disso os arquivos não podem ser recuperados." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnCleanBin" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Esvaziar"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+                  <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
+                    <DockPanel>
+                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#172748" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#60A5FA" Data="M12 3 A9 9 0 1 0 12 21 A9 9 0 1 0 12 3 Z M3 12 H21 M12 3 C14.5 5.7 15.8 8.7 15.8 12 C15.8 15.3 14.5 18.3 12 21 M12 3 C9.5 5.7 8.2 8.7 8.2 12 C8.2 15.3 9.5 18.3 12 21"/></Grid></Viewbox>
+                      </Border>
+                      <StackPanel Margin="16,0,0,0">
+                        <TextBlock Style="{StaticResource H2}" Text="Cache DNS"/>
+                        <TextBlock Text="Resolve problemas de conexão com servidores de jogo que mudaram de endereço." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnFlushDns" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Limpar DNS"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+                </UniformGrid>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- Restauração -->
+            <ScrollViewer x:Name="PageRestore" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+              <StackPanel Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource H1}" Text="Restauração"/>
+                <TextBlock Style="{StaticResource Sub}" Text="Duas camadas de segurança: o backup do Overclutch, que desfaz só o que ele mudou, e os pontos de restauração do Windows."/>
+                <UniformGrid Columns="2">
+                  <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
+                    <DockPanel>
+                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#12302A" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#5BF0B0" Data="M12 3 L4 6 V12 C4 16.5 7.4 20.3 12 21 C16.6 20.3 20 16.5 20 12 V6 Z M12 9 V15 M9 12 H15"/></Grid></Viewbox>
                       </Border>
                       <StackPanel Margin="16,0,0,0">
                         <TextBlock Style="{StaticResource H2}" Text="Ponto de restauração"/>
                         <TextBlock Text="Cria um ponto de restauração do Windows agora ou abre a tela para voltar a um anterior." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
                         <WrapPanel>
-                          <Button x:Name="BtnRestorePoint" Style="{StaticResource SecondaryButton}" Content="Criar agora" Margin="0,0,10,0"/>
+                          <Button x:Name="BtnRestorePoint" Style="{StaticResource PrimaryButton}" Content="Criar agora" Margin="0,0,10,0"/>
                           <Button x:Name="BtnOpenRestore" Style="{StaticResource SecondaryButton}" Content="Abrir Restauração"/>
                         </WrapPanel>
                       </StackPanel>
@@ -600,42 +696,94 @@
                   <Border Style="{StaticResource CardStyle}" Margin="8,0,0,16">
                     <DockPanel>
                       <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#26193F" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#C084FC" Data="M3 12 A9 9 0 1 0 6 5.3 L3 8 M3 3 V8 H8"/></Grid></Viewbox>
+                      </Border>
+                      <StackPanel Margin="16,0,0,0">
+                        <TextBlock Style="{StaticResource H2}" Text="Desfazer otimizações"/>
+                        <TextBlock x:Name="BackupInfo" Text="..." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button x:Name="BtnUndoAllRestore" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Desfazer todas as otimizações"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+                </UniformGrid>
+                <Border Style="{StaticResource CardStyle}">
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource H2}" Text="Pontos de restauração do Windows"/>
+                    <TextBlock Style="{StaticResource Label}" Text="Os mais recentes primeiro" Margin="0,2,0,10"/>
+                    <StackPanel x:Name="RestoreList">
+                      <TextBlock Text="Carregando..." Foreground="{StaticResource Muted}"/>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- Configurações -->
+            <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+              <StackPanel Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource H1}" Text="Configurações"/>
+                <TextBlock Style="{StaticResource Sub}" Text="Preferências do Overclutch, atualizações e dados."/>
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                  <StackPanel>
+                    <TextBlock Style="{StaticResource H2}" Text="Geral" Margin="0,0,0,6"/>
+                    <DockPanel Margin="0,8">
+                      <CheckBox x:Name="ToggleCheckUpdates" DockPanel.Dock="Right" Style="{StaticResource Toggle}" VerticalAlignment="Center"/>
+                      <StackPanel Margin="0,0,20,0">
+                        <TextBlock Text="Verificar atualizações ao abrir" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="Consulta o GitHub em segundo plano e avisa quando sair uma versão nova." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <Border Height="1" Background="#1F2940" Margin="0,6"/>
+                    <DockPanel Margin="0,8">
+                      <CheckBox x:Name="ToggleRestoreBefore" DockPanel.Dock="Right" Style="{StaticResource Toggle}" VerticalAlignment="Center"/>
+                      <StackPanel Margin="0,0,20,0">
+                        <TextBlock Text="Criar ponto de restauração antes de otimizar" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="Recomendado. O botão Otimizar agora cria um ponto do Windows antes de mudar qualquer coisa." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </StackPanel>
+                </Border>
+                <UniformGrid Columns="2">
+                  <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
+                    <DockPanel>
+                      <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#26193F" VerticalAlignment="Top">
                         <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#C084FC" Data="M21 12 A9 9 0 1 1 18 5.3 L21 8 M21 3 V8 H16"/></Grid></Viewbox>
                       </Border>
                       <StackPanel Margin="16,0,0,0">
                         <TextBlock Style="{StaticResource H2}" Text="Atualizações"/>
                         <TextBlock x:Name="UpdateInfo" Text="Confere no GitHub se há uma versão nova do Overclutch." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button x:Name="BtnCheckUpdate" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Verificar atualizações"/>
+                        <Button x:Name="BtnCheckUpdate" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Verificar agora"/>
                       </StackPanel>
                     </DockPanel>
                   </Border>
-                  <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
+                  <Border Style="{StaticResource CardStyle}" Margin="8,0,0,16">
                     <DockPanel>
                       <Border DockPanel.Dock="Left" Style="{StaticResource IconTile}" Background="#2A1830" VerticalAlignment="Top">
                         <Viewbox Width="20" Height="20"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="#F472B6" Data="M3 7 A2 2 0 0 1 5 5 H9 L11 7 H19 A2 2 0 0 1 21 9 V17 A2 2 0 0 1 19 19 H5 A2 2 0 0 1 3 17 Z"/></Grid></Viewbox>
                       </Border>
                       <StackPanel Margin="16,0,0,0">
-                        <TextBlock Style="{StaticResource H2}" Text="Dados do Overclutch"/>
-                        <TextBlock Text="Pasta com o backup dos valores originais, a lista de jogos, as capas e o registro de atividades." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button x:Name="BtnOpenData" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Abrir pasta"/>
+                        <TextBlock Style="{StaticResource H2}" Text="Dados e registro"/>
+                        <TextBlock Text="Backup dos valores originais, configurações e o registro de tudo o que o app fez." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <WrapPanel>
+                          <Button x:Name="BtnOpenData" Style="{StaticResource SecondaryButton}" Content="Abrir pasta" Margin="0,0,10,0"/>
+                          <Button x:Name="BtnOpenLog" Style="{StaticResource SecondaryButton}" Content="Ver registro"/>
+                        </WrapPanel>
                       </StackPanel>
                     </DockPanel>
                   </Border>
                 </UniformGrid>
+                <Border Style="{StaticResource CardStyle}">
+                  <DockPanel>
+                    <Image x:Name="AboutLogo" DockPanel.Dock="Left" Width="44" Height="44" VerticalAlignment="Top"/>
+                    <StackPanel Margin="16,0,0,0">
+                      <TextBlock x:Name="AboutVersion" Style="{StaticResource H2}" Text="Overclutch"/>
+                      <TextBlock Text="Otimizador de Windows para jogos. Grátis e de código aberto, sob licença MIT." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+                      <Button x:Name="AboutGitHub" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Ver o código no GitHub"/>
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
               </StackPanel>
             </ScrollViewer>
-
-            <!-- Registro -->
-            <DockPanel x:Name="PageLog" Visibility="Collapsed" Margin="0,0,10,16">
-              <StackPanel DockPanel.Dock="Top">
-                <TextBlock Style="{StaticResource H1}" Text="Registro de atividades"/>
-                <TextBlock Style="{StaticResource Sub}" Text="Tudo o que o Overclutch fez nesta sessão."/>
-              </StackPanel>
-              <Border Style="{StaticResource CardStyle}" Padding="4">
-                <TextBox x:Name="LogBox" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="#C9D2E6"
-                         BorderThickness="0" Padding="12" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-              </Border>
-            </DockPanel>
           </Grid>
 
           <!-- Barra de status -->

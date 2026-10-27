@@ -2,14 +2,14 @@
 .SYNOPSIS
     Teste de ponta a ponta da interface: abre o app em MODO SIMULAÇÃO e clica em cada
     botão, como um usuário faria, registrando mensagens e erros. Nada é alterado no PC.
-    Ficam de fora só os botões que abrem outros programas (seletor de .exe, Restauração
-    do Sistema, Explorer) e o "Atualizar agora" (instalaria de verdade).
+    Ficam de fora só os botões que abrem outros programas (Restauração do Sistema,
+    Explorer, Bloco de Notas, links) e o "Atualizar agora" (instalaria de verdade).
     Uso: powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-UiTests.ps1
 #>
 $ErrorActionPreference = 'Continue'
 $root = Split-Path $PSScriptRoot -Parent
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-. (Join-Path $root 'src\Core.ps1'); . (Join-Path $root 'src\Tweaks.ps1'); . (Join-Path $root 'src\Games.ps1')
+. (Join-Path $root 'src\Core.ps1'); . (Join-Path $root 'src\Tweaks.ps1')
 . (Join-Path $root 'src\Update.ps1'); . (Join-Path $root 'src\UI.ps1')
 
 $data = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-ui-" + [guid]::NewGuid())
@@ -55,40 +55,46 @@ Step 'Aplicar selecionadas (simulação)' { Click 'BtnSelectAll'; Click 'BtnAppl
 Step 'Reverter selecionadas (simulação)' { Click 'BtnRevertSelected'; Click 'BtnSelectRecommended' }
 Step 'Otimizar agora (simulação)' { Click 'BtnBoost'; Check ([bool]($script:Messages -match 'Otimização concluída')) 'mensagem de conclusão' }
 Step 'Desfazer tudo (simulação)' { Click 'BtnUndoAll'; Check ([bool]($script:Messages -match 'Tudo revertido')) 'mensagem de reversão' }
-Step 'Detectar jogos' { Click 'BtnDetectGames'; Check ([bool]($script:Messages -match 'jogo')) 'mensagem da detecção' }
-Step 'Jogos: adicionar, otimizar, remover boost e remover' {
-    $exe = Join-Path $env:SystemRoot 'notepad.exe'
-    Add-Game 'Jogo de teste' $exe | Out-Null; Update-State
-    Check (@($script:Games | Where-Object Path -eq $exe).Count -eq 1) 'jogo adicionado à lista'
-    Click 'BtnBoostGames'; Click 'BtnUnboostGames'
-    function Get-Descendants { param($Node) foreach ($c in [System.Windows.LogicalTreeHelper]::GetChildren($Node)) { if ($c -is [System.Windows.DependencyObject]) { $c; Get-Descendants $c } } }
-    $tile = $script:UI.GameList.Children | Where-Object { "$($_.ToolTip)" -like "*$exe" } | Select-Object -First 1
-    Check ($null -ne $tile) 'jogo aparece como cartão'
-    Check (-not (Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.TextBlock] -and $_.Text -eq $exe })) 'cartão mostra só o nome, sem o caminho'
-    Check ([bool](Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.Border] -and $_.Height -eq 116 })) 'cartão tem área de capa'
-    $remove = Get-Descendants $tile | Where-Object { $_ -is [System.Windows.Controls.Button] -and $_.Tag -eq $exe } | Select-Object -First 1
-    if ($remove) { $remove.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))) }
-    Check (-not ($script:Games | Where-Object Path -eq $exe)) 'botão Remover tira o jogo da lista'
+Step 'Limpeza: cada item (simulação)' {
+    foreach ($b in 'BtnCleanTemp', 'BtnCleanThumbs', 'BtnCleanUpdate', 'BtnCleanBin') {
+        $before = $script:Messages.Count; Click $b
+        Check ($script:Messages.Count -gt $before -and $script:Messages[-1] -match 'Nada foi apagado') "$b mostra o resultado da simulação"
+    }
+    Click 'BtnFlushDns'; Check ([bool]($script:Messages -match 'DNS limpo')) 'Limpar DNS'
 }
-Step 'Limpar arquivos temporários (simulação)' { Click 'BtnCleanTemp'; Check ([bool]($script:Messages -match 'seriam liberados.*Nada foi apagado')) 'mensagem da simulação com o tamanho' }
-Step 'Limpar DNS (simulação)' { Click 'BtnFlushDns'; Check ([bool]($script:Messages -match 'DNS limpo')) 'mensagem do DNS' }
-Step 'Criar ponto de restauração (simulação)' { Click 'BtnRestorePoint'; Check ([bool]($script:Messages -match 'Ponto de restauração criado')) 'mensagem do ponto de restauração' }
+Step 'Limpeza: limpar tudo (simulação)' {
+    Click 'BtnCleanAll'
+    $last = $script:Messages[-1]
+    Check ($last -match 'Arquivos temporários' -and $last -match 'Lixeira' -and $last -match 'Cache DNS') "resumo com todos os itens"
+}
+Step 'Restauração' {
+    Click 'BtnRestorePoint'; Check ([bool]($script:Messages -match 'Ponto de restauração criado')) 'criar ponto de restauração'
+    Check ($script:UI.RestoreList.Children.Count -ge 1) 'lista de pontos de restauração preenchida'
+    Check ($script:UI.BackupInfo.Text -ne '...') "situação do backup ($($script:UI.BackupInfo.Text))"
+    $before = $script:Messages.Count; Click 'BtnUndoAllRestore'
+    Check ($script:Messages.Count -gt $before) 'Desfazer na aba Restauração funciona'
+}
+Step 'Configurações' {
+    $orig = [bool](Get-Setting 'CheckUpdates')
+    $script:UI.ToggleCheckUpdates.IsChecked = -not $orig
+    $script:UI.ToggleCheckUpdates.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
+    Check ([bool](Get-Setting 'CheckUpdates') -eq (-not $orig)) 'chave "verificar atualizações" salva a escolha'
+    Check ($script:UI.AboutVersion.Text -match [regex]::Escape($script:AppVersion)) "Sobre mostra a versão ($($script:UI.AboutVersion.Text))"
+    Check ($script:UI.LinkGitHub.Visibility -eq 'Visible') 'ícone do GitHub no menu'
+    Check (($script:Links.Keys | Where-Object { -not $script:Links[$_] } | ForEach-Object { $script:UI["Link$_"].Visibility }) -notcontains 'Visible') 'redes sem link ficam escondidas'
+}
+Step 'Fonte e Painel' {
+    Check ($script:Window.FontFamily.Source -match 'Poppins') "fonte da janela: $($script:Window.FontFamily.Source)"
+    Check ($script:UI.CpuText.Text -notin '...', '') "hardware carregado ($($script:UI.CpuText.Text), $($script:UI.GpuText.Text))"
+    Check ($script:UI.StatRestore.Text -ne '...') "último ponto de restauração: $($script:UI.StatRestore.Text)"
+    Check ($null -ne $script:UI.ScoreArc.Data -or $script:UI.ScoreText.Text -eq '0%') 'anel de progresso desenhado'
+}
 Step 'Verificar atualizações' { Click 'BtnCheckUpdate'; Check ([bool]($script:Messages -match 'versão')) 'resposta da verificação' }
 Step 'Faixa de atualização: Depois' {
     Show-UpdateBanner ([pscustomobject]@{ Version = '9.9.9'; Url = "https://github.com/$($script:UpdateRepo)/releases/download/v9.9.9/Overclutch-Setup.exe"; Size = 1; Sha256 = $null })
     Check ($script:UI.UpdateBanner.Visibility -eq 'Visible') 'faixa aparece'
     Click 'BtnUpdateLater'; Check ($script:UI.UpdateBanner.Visibility -eq 'Collapsed') 'Depois esconde a faixa'
 }
-Step 'Capas dos jogos' {
-    $withCover = @($script:Games | Where-Object { Test-Path -LiteralPath (Get-CoverFile $_.Path) })
-    Check ($withCover.Count -ge 1) "capas encontradas: $($withCover.Count) de $($script:Games.Count) (sem capa, o cartão mostra o ícone do jogo)"
-}
-Step 'Painel: resumo e hardware' {
-    Check ($script:UI.StatGames.Text -match "de $($script:Games.Count)$") "Jogos otimizados conta os $($script:Games.Count) jogos ($($script:UI.StatGames.Text))"
-    Check ($script:UI.CpuText.Text -notin '...', '') "hardware carregado ($($script:UI.CpuText.Text), $($script:UI.GpuText.Text))"
-    Check ($null -ne $script:UI.ScoreArc.Data -or $script:UI.ScoreText.Text -eq '0%') 'anel de progresso desenhado'
-}
-Step 'Registro de atividades' { Check ($script:UI.LogBox.Text.Length -gt 0) 'Registro mostra as ações' }
 
 $script:Busy = $false
 $timer = New-Object System.Windows.Threading.DispatcherTimer

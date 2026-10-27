@@ -26,7 +26,6 @@ foreach ($f in Get-ChildItem -Path $root -Recurse -Filter *.ps1) {
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 . (Join-Path $root 'src\Core.ps1')
 . (Join-Path $root 'src\Tweaks.ps1')
-. (Join-Path $root 'src\Games.ps1')
 . (Join-Path $root 'src\Update.ps1')
 
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-test-" + [guid]::NewGuid())
@@ -130,57 +129,32 @@ Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Sha256'; e = { 
 $bgUpdate = Invoke-InBackground 'teste' 'param($p) Test-NewerVersion "2.0" "1.0"'
 Assert ($bgUpdate -eq $true) 'Módulo de atualização carrega em segundo plano'
 
-Write-Host 'Escolha do .exe do jogo (pastas falsas)'
-function New-FakeExe { param([string]$Path, [long]$Size)
-    New-Item -ItemType Directory -Path (Split-Path $Path) -Force | Out-Null
-    $fs = [IO.File]::Create($Path); $fs.SetLength($Size); $fs.Close() }
-$g1 = Join-Path $tmp 'jogos\My Game'
-New-FakeExe "$g1\MyGame.exe" 2MB
-New-FakeExe "$g1\MyGame_Trial.exe" 3MB
-New-FakeExe "$g1\PlayMyGame.exe" 200KB
-New-FakeExe "$g1\EAAntiCheat.Installer.exe" 4MB
-New-FakeExe "$g1\UnityCrashHandler64.exe" 1MB
-New-FakeExe "$g1\Redistributables\vc_redist.x64.exe" 9MB
-Assert ((Find-GameExecutable -Dir $g1 -Name 'My Game') -eq "$g1\MyGame.exe") 'Ignora versão de teste, anti-cheat, crash handler e redistribuíveis'
-$g2 = Join-Path $tmp 'jogos\Shooter'
-New-FakeExe "$g2\Shooter.exe" 300KB
-New-FakeExe "$g2\Shooter\Binaries\Win64\Shooter-Win64-Shipping.exe" 1MB
-Assert ((Find-GameExecutable -Dir $g2 -Name 'Shooter') -eq "$g2\Shooter\Binaries\Win64\Shooter-Win64-Shipping.exe") 'Jogo Unreal: escolhe o -Shipping.exe, não o launcher da raiz'
-$g3 = Join-Path $tmp 'jogos\RedDeadRedemption3'
-New-FakeExe "$g3\PlayRDR3.exe" 700KB
-New-FakeExe "$g3\RDR3.exe" 80MB
-New-FakeExe "$g3\Redistributables\Rockstar-Games-Launcher.exe" 120MB
-Assert ((Find-GameExecutable -Dir $g3 -Name 'Red Dead Redemption 3' -Hint 'PlayRDR3.exe') -eq "$g3\RDR3.exe") 'Nome diferente da pasta: escolhe o maior .exe que não é launcher'
-Assert ($null -eq (Find-GameExecutable -Dir (Join-Path $tmp 'nao-existe') -Name 'X')) 'Pasta inexistente não quebra'
-Assert ((Get-CleanGameName 'EA SPORTS FC™ 26') -eq 'EA SPORTS FC 26' -and (Get-CleanGameName 'F1® 24') -eq 'F1 24') 'Remove ™ e ® dos nomes'
+Write-Host 'Configurações'
+Initialize-Core -DataDir (Join-Path $tmp 'settings-test')
+Assert ((Get-Setting 'CheckUpdates') -eq $true -and (Get-Setting 'RestorePointBeforeBoost') -eq $true) 'Padrões: verificar atualizações e criar ponto de restauração'
+Set-Setting 'CheckUpdates' $false
+Assert ((Get-Setting 'CheckUpdates') -eq $false -and (Get-Setting 'RestorePointBeforeBoost') -eq $true) 'Configuração salva sem apagar as outras'
 
-Write-Host 'Jogos removidos não voltam sozinhos'
-Initialize-Core -DataDir (Join-Path $tmp 'ignore-test')
-Import-Games
-$fake = @([pscustomobject]@{ Name = 'My Game'; Path = "$g1\MyGame.exe" }, [pscustomobject]@{ Name = 'Shooter'; Path = "$g2\Shooter.exe" })
-Assert (@(Add-DetectedGames $fake -Automatic).Count -eq 2) 'Detecção automática adiciona os jogos novos'
-Assert (@(Add-DetectedGames (, $fake)).Count -eq 0 -and $script:Games.Count -eq 2) 'Lista embrulhada (vinda de segundo plano) não vira um jogo só'
-Remove-Game "$g1\MyGame.exe"
-Assert (@(Add-DetectedGames $fake -Automatic).Count -eq 0) 'Jogo removido não volta na detecção automática'
-Assert (@(Add-DetectedGames $fake).Count -eq 1) 'Clique em Detectar traz de volta o jogo removido'
-Assert (-not ((Get-IgnoredGames) -contains "$g1\MyGame.exe")) 'Readicionar tira o jogo da lista de ignorados'
-
-Write-Host 'Jogos'
-Initialize-Core -DataDir $tmp -DryRun
-Import-Games   # começa com a lista desta pasta de teste, não a do teste anterior
-$found = @(Find-InstalledGames)
-Assert $true "Detecção rodou: $($found.Count) jogo(s) encontrado(s) $(($found | ForEach-Object Name) -join ', ')"
-Add-Game 'Jogo Teste' 'C:\Jogos\teste.exe' | Out-Null
-Import-Games
-Assert ($script:Games.Count -eq 1 -and $script:Games[0].Path -eq 'C:\Jogos\teste.exe') 'Lista de jogos salva e recarregada'
-Invoke-GameBoost $script:Games[0]
-Assert (-not (Test-GameBoosted $script:Games[0])) 'Boost de jogo simulado sem escrever'
+Write-Host 'Limpeza em simulação (nada é apagado)'
+Initialize-Core -DataDir (Join-Path $tmp 'clean-test') -DryRun
+$explorer = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Explorer'
+$thumbsBefore = @(Get-ChildItem $explorer -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'thumbcache_*.db' -or $_.Name -like 'iconcache_*.db' }).Count
+$r = Clear-ThumbnailCache
+$thumbsAfter = @(Get-ChildItem $explorer -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'thumbcache_*.db' -or $_.Name -like 'iconcache_*.db' }).Count
+Assert ($r.Files -eq $thumbsBefore -and $thumbsAfter -eq $thumbsBefore) "Miniaturas contadas sem apagar ($($r.Files) arquivos)"
+$binBefore = (Get-RecycleBinInfo).Files
+$bin = Clear-RecycleBinSafe
+Assert ($bin.Files -eq $binBefore -and (Get-RecycleBinInfo).Files -eq $binBefore) "Lixeira contada sem esvaziar ($($bin.Files) itens)"
+Assert ($null -ne (Clear-WindowsUpdateCache)) 'Cache do Windows Update contado'
 
 Write-Host 'Interface'
 [xml]$xml = Get-Content -LiteralPath (Join-Path $root 'src\MainWindow.xaml') -Raw -Encoding UTF8
 $window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xml))
 Assert ($null -ne $window) 'XAML carrega'
-foreach ($n in @('BtnBoost', 'BtnUndoAll', 'UpdateBanner', 'BtnUpdateNow', 'BtnUpdateLater', 'BtnCheckUpdate', 'UpdateInfo', 'TweakList', 'GameList', 'LogBox', 'StatusText', 'ContentHost', 'BusyBar') + ('Home', 'Tweaks', 'Games', 'Tools', 'Log' | ForEach-Object { "Page$_"; "Nav$_" })) {
+foreach ($n in @('BtnBoost', 'BtnUndoAll', 'UpdateBanner', 'BtnUpdateNow', 'BtnUpdateLater', 'BtnCheckUpdate', 'UpdateInfo', 'TweakList', 'StatusText', 'ContentHost', 'BusyBar',
+        'BtnCleanTemp', 'BtnCleanThumbs', 'BtnCleanUpdate', 'BtnCleanBin', 'BtnFlushDns', 'BtnCleanAll', 'BtnRestorePoint', 'BtnOpenRestore', 'BtnUndoAllRestore', 'RestoreList', 'BackupInfo',
+        'ToggleCheckUpdates', 'ToggleRestoreBefore', 'BtnOpenData', 'BtnOpenLog', 'AboutVersion', 'StatRestore', 'LinkInstagram', 'LinkYouTube', 'LinkDiscord', 'LinkGitHub') +
+        ('Home', 'Tweaks', 'Clean', 'Restore', 'Settings' | ForEach-Object { "Page$_"; "Nav$_" })) {
     Assert ($null -ne $window.FindName($n)) "Controle $n existe"
 }
 

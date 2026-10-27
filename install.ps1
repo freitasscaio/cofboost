@@ -24,7 +24,7 @@ if ($Uninstall) {
 New-Item -ItemType Directory -Path (Join-Path $target 'src'), (Join-Path $target 'assets') -Force | Out-Null
 Copy-Item -Path (Join-Path $PSScriptRoot 'Overclutch.ps1'), (Join-Path $PSScriptRoot 'Iniciar.bat'), (Join-Path $PSScriptRoot 'Simular.bat') -Destination $target -Force
 Copy-Item -Path (Join-Path $PSScriptRoot 'src\*') -Destination (Join-Path $target 'src') -Recurse -Force
-Copy-Item -Path (Join-Path $PSScriptRoot 'assets\overclutch.ico') -Destination (Join-Path $target 'assets') -Force
+Copy-Item -Path (Join-Path $PSScriptRoot 'assets\*') -Destination (Join-Path $target 'assets') -Recurse -Force
 Get-ChildItem -LiteralPath $target -Recurse -File | Unblock-File
 
 $shell = New-Object -ComObject WScript.Shell

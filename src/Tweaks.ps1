@@ -210,6 +210,48 @@ $script:Tweaks = @(
         }
     }
 
+    # ------------------------------------------------------------ Recursos do Windows
+    @{
+        Id = 'copilot'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'; Reboot = $true
+        Name = 'Desativar Copilot'
+        Description = 'Desliga o Copilot do Windows e tira o botão dele da barra de tarefas.'
+        Registry = @(
+            (RegSet 'HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' 1)
+            (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' 1)
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowCopilotButton' 0)
+        )
+    }
+    @{
+        Id = 'widgets'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'; Reboot = $true
+        Name = 'Desativar Widgets'
+        Description = 'Desliga o painel de Widgets (notícias e clima), que fica carregando conteúdo em segundo plano.'
+        Registry = @( (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests' 0) )
+    }
+    @{
+        Id = 'recall'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'; Reboot = $true
+        Name = 'Desativar Recall (IA do Windows)'
+        Description = 'Impede o Windows de tirar capturas da tela para a linha do tempo do Recall. Libera disco e CPU.'
+        Registry = @(
+            (RegSet 'HKCU:\Software\Policies\Microsoft\Windows\WindowsAI' 'DisableAIDataAnalysis' 1)
+            (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI' 'DisableAIDataAnalysis' 1)
+        )
+    }
+    @{
+        Id = 'gamebar-overlay'; Category = 'Recursos do Windows'; Default = $false; Risk = 'Baixo'
+        Name = 'Desativar sobreposição da Xbox Game Bar'
+        Description = 'Win+G deixa de abrir a Game Bar por cima do jogo. Não use se grava clipes ou usa o chat de voz dela.'
+        Registry = @(
+            (RegSet 'HKCU:\Software\Microsoft\GameBar' 'UseNexusForGameBarEnabled' 0)
+            (RegSet 'HKCU:\Software\Microsoft\GameBar' 'ShowStartupPanel' 0)
+        )
+    }
+    @{
+        Id = 'core-isolation'; Category = 'Recursos do Windows'; Default = $false; Risk = 'Alto'; Reboot = $true
+        Name = 'Desativar isolamento de núcleo (Integridade de Memória)'
+        Description = 'Pode dar alguns FPS a mais, mas desliga uma proteção do Windows contra drivers maliciosos. Só ative se souber o que está fazendo.'
+        Registry = @( (RegSet 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' 'Enabled' 0) )
+    }
+
     # ------------------------------------------------------------ Serviços
     @{
         Id = 'svc-telemetry'; Category = 'Serviços'; Default = $true; Risk = 'Baixo'
