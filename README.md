@@ -8,7 +8,7 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 
 - **Otimizar agora (1 clique):** cria um ponto de restauração e aplica as otimizações recomendadas.
 - **20 otimizações** em 5 categorias (Sistema, Jogos, Latência e Input, Rede, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
-- **Boost por jogo:** detecta CS2, Valorant, LoL, Fortnite, Dota 2, Rocket League, Apex, PUBG, R6, GTA V e Roblox (ou qualquer `.exe` que você adicionar) e força a GPU dedicada + prioridade alta de CPU.
+- **Boost por jogo:** ao abrir, o app encontra sozinho os jogos instalados pela **Steam** (todas as bibliotecas), **Epic**, **Riot**, **EA**, **Ubisoft**, **GOG**, **Battle.net** e **Xbox/Game Pass**, escolhe o `.exe` do jogo (ignorando launchers, anti-cheat, instaladores e versões de teste) e coloca na lista. Para cada um, força a GPU dedicada e a prioridade alta de CPU. Jogos removidos da lista não voltam sozinhos.
 - **Ferramentas:** limpar arquivos temporários, limpar o cache DNS, criar um ponto de restauração.
 - **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\Overclutch\backup.json`, e cada ajuste volta exatamente ao que era.
 - **Modo simulação** (`Simular.bat`): mostra no Registro tudo o que seria alterado, sem mudar nada.

@@ -17,14 +17,16 @@ function Set-Status { param([string]$Text) $script:UI.StatusText.Text = $Text; U
 $script:CoreFile = Join-Path $PSScriptRoot 'Core.ps1'
 
 $script:UpdateFile = Join-Path $PSScriptRoot 'Update.ps1'
+$script:GamesFile  = Join-Path $PSScriptRoot 'Games.ps1'
 
-# PowerShell em outra thread com o Core e o Update carregados, pronto para rodar $Body
-# (texto de script que recebe $Progress).
+# PowerShell em outra thread com o Core, Games e Update carregados, pronto para rodar
+# $Body (texto de script que recebe $Progress).
 function New-BackgroundShell {
     param([string]$Body, $Progress)
     $wrapper = {
-        param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress)
+        param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress, $GamesFile)
         . $CoreFile
+        . $GamesFile
         # Sem o Update.ps1 (instalação incompleta) só a atualização deixa de funcionar.
         if (Test-Path -LiteralPath $UpdateFile) { . $UpdateFile }
         Initialize-Core -DataDir $DataDir -DryRun:$DryRun
@@ -32,7 +34,7 @@ function New-BackgroundShell {
     }
     $ps = [PowerShell]::Create()
     [void]$ps.AddScript($wrapper.ToString()).AddArgument($script:CoreFile).AddArgument($script:UpdateFile).
-        AddArgument($script:Core.DataDir).AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($Progress)
+        AddArgument($script:Core.DataDir).AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($Progress).AddArgument($script:GamesFile)
     $ps
 }
 
@@ -374,9 +376,12 @@ function Register-Handlers {
 
     $script:UI.BtnDetectGames.Add_Click({
         Invoke-Busy 'Procurando jogos instalados...' {
-            $added = 0
-            foreach ($g in @(Find-InstalledGames)) { if (Add-Game $g.Name $g.Path) { $added++ } }
-            Show-Message $(if ($added) { "$added jogo(s) encontrado(s) e adicionado(s)." } else { 'Nenhum jogo novo encontrado. Use "Adicionar .exe manualmente".' }) | Out-Null
+            $found = @(Invoke-InBackground 'Procurando jogos na Steam, Epic, Riot, EA, Ubisoft, GOG, Battle.net e Xbox' 'param($p) ,@(Find-InstalledGames)' | ForEach-Object { $_ })
+            $added = @(Add-DetectedGames $found)
+            $msg = if ($added.Count) { "$($added.Count) jogo(s) adicionado(s):`n" + ($added -join "`n") }
+                   elseif ($found.Count) { "Todos os $($found.Count) jogos encontrados já estão na lista." }
+                   else { 'Nenhum jogo encontrado nas lojas. Use "Adicionar .exe manualmente".' }
+            Show-Message $msg | Out-Null
         }
     })
 
@@ -448,6 +453,22 @@ function Register-Handlers {
         }
         if ($script:UpdateAfterBusy) { $script:UpdateAfterBusy = $false; Invoke-UpdateNow }
     })
+}
+
+# ---------------------------------------------------------------- jogos
+
+# Ao abrir: procura jogos novos em segundo plano e já coloca na lista (menos os que o
+# usuário removeu de propósito).
+function Start-GameScan {
+    Start-InBackground 'param($p) ,@(Find-InstalledGames)' {
+        param($found, $err)
+        if ($err) { Write-Log "Busca de jogos falhou: $err" 'WARN'; return }
+        $added = @(Add-DetectedGames $found -Automatic)
+        if ($added.Count) {
+            Write-Log "$($added.Count) jogo(s) novo(s) encontrado(s): $($added -join ', ')."
+            Build-GameList
+        }
+    }
 }
 
 # ---------------------------------------------------------------- atualização
@@ -599,6 +620,7 @@ function Start-App {
     Write-Log "$($script:AppName) $($script:AppVersion) iniciado$(if (Test-DryRun) { ' em modo simulação' })."
     $script:UI.UpdateInfo.Text = "Versão instalada: $($script:AppVersion). Confere no GitHub se há uma mais nova."
     Start-UpdateCheck
+    Start-GameScan
 
     [void]$script:Window.ShowDialog()
 }

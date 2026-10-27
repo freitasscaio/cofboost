@@ -130,8 +130,44 @@ Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Sha256'; e = { 
 $bgUpdate = Invoke-InBackground 'teste' 'param($p) Test-NewerVersion "2.0" "1.0"'
 Assert ($bgUpdate -eq $true) 'Módulo de atualização carrega em segundo plano'
 
+Write-Host 'Escolha do .exe do jogo (pastas falsas)'
+function New-FakeExe { param([string]$Path, [long]$Size)
+    New-Item -ItemType Directory -Path (Split-Path $Path) -Force | Out-Null
+    $fs = [IO.File]::Create($Path); $fs.SetLength($Size); $fs.Close() }
+$g1 = Join-Path $tmp 'jogos\My Game'
+New-FakeExe "$g1\MyGame.exe" 2MB
+New-FakeExe "$g1\MyGame_Trial.exe" 3MB
+New-FakeExe "$g1\PlayMyGame.exe" 200KB
+New-FakeExe "$g1\EAAntiCheat.Installer.exe" 4MB
+New-FakeExe "$g1\UnityCrashHandler64.exe" 1MB
+New-FakeExe "$g1\Redistributables\vc_redist.x64.exe" 9MB
+Assert ((Find-GameExecutable -Dir $g1 -Name 'My Game') -eq "$g1\MyGame.exe") 'Ignora versão de teste, anti-cheat, crash handler e redistribuíveis'
+$g2 = Join-Path $tmp 'jogos\Shooter'
+New-FakeExe "$g2\Shooter.exe" 300KB
+New-FakeExe "$g2\Shooter\Binaries\Win64\Shooter-Win64-Shipping.exe" 1MB
+Assert ((Find-GameExecutable -Dir $g2 -Name 'Shooter') -eq "$g2\Shooter\Binaries\Win64\Shooter-Win64-Shipping.exe") 'Jogo Unreal: escolhe o -Shipping.exe, não o launcher da raiz'
+$g3 = Join-Path $tmp 'jogos\RedDeadRedemption3'
+New-FakeExe "$g3\PlayRDR3.exe" 700KB
+New-FakeExe "$g3\RDR3.exe" 80MB
+New-FakeExe "$g3\Redistributables\Rockstar-Games-Launcher.exe" 120MB
+Assert ((Find-GameExecutable -Dir $g3 -Name 'Red Dead Redemption 3' -Hint 'PlayRDR3.exe') -eq "$g3\RDR3.exe") 'Nome diferente da pasta: escolhe o maior .exe que não é launcher'
+Assert ($null -eq (Find-GameExecutable -Dir (Join-Path $tmp 'nao-existe') -Name 'X')) 'Pasta inexistente não quebra'
+Assert ((Get-CleanGameName 'EA SPORTS FC™ 26') -eq 'EA SPORTS FC 26' -and (Get-CleanGameName 'F1® 24') -eq 'F1 24') 'Remove ™ e ® dos nomes'
+
+Write-Host 'Jogos removidos não voltam sozinhos'
+Initialize-Core -DataDir (Join-Path $tmp 'ignore-test')
+Import-Games
+$fake = @([pscustomobject]@{ Name = 'My Game'; Path = "$g1\MyGame.exe" }, [pscustomobject]@{ Name = 'Shooter'; Path = "$g2\Shooter.exe" })
+Assert (@(Add-DetectedGames $fake -Automatic).Count -eq 2) 'Detecção automática adiciona os jogos novos'
+Assert (@(Add-DetectedGames (, $fake)).Count -eq 0 -and $script:Games.Count -eq 2) 'Lista embrulhada (vinda de segundo plano) não vira um jogo só'
+Remove-Game "$g1\MyGame.exe"
+Assert (@(Add-DetectedGames $fake -Automatic).Count -eq 0) 'Jogo removido não volta na detecção automática'
+Assert (@(Add-DetectedGames $fake).Count -eq 1) 'Clique em Detectar traz de volta o jogo removido'
+Assert (-not ((Get-IgnoredGames) -contains "$g1\MyGame.exe")) 'Readicionar tira o jogo da lista de ignorados'
+
 Write-Host 'Jogos'
 Initialize-Core -DataDir $tmp -DryRun
+Import-Games   # começa com a lista desta pasta de teste, não a do teste anterior
 $found = @(Find-InstalledGames)
 Assert $true "Detecção rodou: $($found.Count) jogo(s) encontrado(s) $(($found | ForEach-Object Name) -join ', ')"
 Add-Game 'Jogo Teste' 'C:\Jogos\teste.exe' | Out-Null
