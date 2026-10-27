@@ -3,7 +3,7 @@
 # para que possa ser desfeita exatamente como estava.
 
 $script:AppName    = 'Overclutch'
-$script:AppVersion = '1.0.4'
+$script:AppVersion = '1.0.5'
 
 $script:Core = @{
     DataDir    = $null
@@ -291,17 +291,57 @@ function Clear-Dns {
     Write-Log 'Cache DNS limpo.'
 }
 
+# Dados para o Painel. Cada parte tem fallback: um item que falhar não derruba os outros.
 function Get-SystemInfo {
-    $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name
-    $gpu = (Get-CimInstance Win32_VideoController |
-        Where-Object { $_.Name -notmatch 'Basic|Virtual|Parsec|Remote' } |
-        ForEach-Object { $_.Name }) -join ' + '
-    $ram = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
-    $os  = Get-CimInstance Win32_OperatingSystem
-    [pscustomobject]@{
-        Cpu = "$cpu".Trim()
-        Gpu = $(if ($gpu) { $gpu } else { 'Não identificada' })
-        Ram = "$ram GB"
-        Os  = "$($os.Caption) (build $($os.BuildNumber))"
+    $info = [ordered]@{
+        Cpu = 'Não identificado'; CpuChip = ''; CpuThreads = ''; Gpu = 'Não identificada'; GpuChip = ''
+        Ram = ''; RamChip = ''; Disk = ''; DiskChip = ''
+        Os = ''; OsVersion = ''; OsBuild = ''; DiskModel = ''
     }
+    try {
+        $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+        $info.Cpu = ("$($cpu.Name)" -replace '\s+', ' ' -replace '\s*\d+-Core Processor', '').Trim()
+        $info.CpuChip = "$($cpu.NumberOfCores) núcleos"
+        $info.CpuThreads = "$($cpu.NumberOfCores) núcleos e $($cpu.NumberOfLogicalProcessors) threads"
+    } catch { }
+    try {
+        $gpu = Get-CimInstance Win32_VideoController | Where-Object { $_.Name -notmatch 'Basic|Virtual|Parsec|Remote' } | Select-Object -First 1
+        if ($gpu) {
+            $info.Gpu = ("$($gpu.Name)" -replace '^(NVIDIA|AMD|Intel\(R\)|Intel)\s+', '').Trim()   # o fabricante já aparece no modelo (GeForce, Radeon, Arc)
+            # Win32_VideoController limita a 4 GB; o tamanho real fica no registro do driver.
+            $cls = 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}'
+            $vram = Get-ChildItem $cls -ErrorAction SilentlyContinue | ForEach-Object { Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue } |
+                Where-Object { $_.DriverDesc -eq $gpu.Name -and $_.'HardwareInformation.qwMemorySize' } | Select-Object -First 1
+            if ($vram) { $info.GpuChip = '{0:N0} GB' -f ($vram.'HardwareInformation.qwMemorySize' / 1GB) }
+        }
+    } catch { }
+    try {
+        $mem = @(Get-CimInstance Win32_PhysicalMemory)
+        $total = ($mem | Measure-Object Capacity -Sum).Sum
+        if (-not $total) { $total = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory }
+        $info.Ram = '{0:N0} GB' -f ($total / 1GB)
+        $type = switch (($mem | Select-Object -First 1).SMBIOSMemoryType) { 20 { 'DDR' } 21 { 'DDR2' } 24 { 'DDR3' } 26 { 'DDR4' } 34 { 'DDR5' } default { '' } }
+        $speed = ($mem | Select-Object -First 1).ConfiguredClockSpeed
+        $info.RamChip = (@($type, $(if ($speed) { "$speed MT/s" })) | Where-Object { $_ }) -join ' '
+    } catch { }
+    try {
+        $part = Get-Partition -DriveLetter ($env:SystemDrive.TrimEnd(':')) -ErrorAction Stop
+        $pd = Get-PhysicalDisk -ErrorAction Stop | Where-Object { $_.DeviceId -eq "$($part.DiskNumber)" } | Select-Object -First 1
+        if ($pd) {
+            $info.Disk = '{0:N0} GB' -f ($pd.Size / 1GB)
+            $media = switch ("$($pd.MediaType)") { 'SSD' { 'SSD' } 'HDD' { 'HD' } default { '' } }
+            $info.DiskChip = (@($media, $(if ("$($pd.BusType)" -eq 'NVMe') { 'NVMe' })) | Where-Object { $_ }) -join ' '
+            $info.DiskModel = "$($pd.FriendlyName)".Trim()
+        }
+    } catch {
+        try { $d = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$($env:SystemDrive)'"; $info.Disk = '{0:N0} GB' -f ($d.Size / 1GB) } catch { }
+    }
+    try {
+        $os = Get-CimInstance Win32_OperatingSystem
+        $cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction SilentlyContinue
+        $info.Os = ("$($os.Caption)" -replace '^Microsoft\s+', '').Trim()
+        $info.OsVersion = "$($cv.DisplayVersion)"
+        $info.OsBuild = $(if ($cv.UBR) { "$($cv.CurrentBuild).$($cv.UBR)" } else { "$($os.BuildNumber)" })
+    } catch { }
+    [pscustomobject]$info
 }

@@ -118,8 +118,9 @@ function Show-Page {
         $active = $p -eq $Name
         $script:UI["Page$p"].Visibility = $(if ($active) { 'Visible' } else { 'Collapsed' })
         $btn = $script:UI["Nav$p"]
-        $btn.Background = New-Brush $(if ($active) { '#221B3A' } else { '#00000000' })
-        $btn.Foreground = New-Brush $(if ($active) { '#FFFFFF' } else { '#B8BDCC' })
+        $btn.Background = New-Brush $(if ($active) { '#17203A' } else { '#00000000' })
+        $btn.Foreground = New-Brush $(if ($active) { '#FFFFFF' } else { '#9AA4BA' })
+        $btn.BorderBrush = New-Brush $(if ($active) { '#8B5CF6' } else { '#00000000' })   # indicador lateral
     }
 }
 
@@ -138,16 +139,16 @@ function New-Badge {
 function Set-Badge {
     param($Badge, [bool]$On, [string]$OnText = 'ATIVO', [string]$OffText = 'INATIVO')
     if ($On) {
-        $Badge.Background = New-Brush '#12301F'; $Badge.Child.Foreground = New-Brush '#4ADE80'; $Badge.Child.Text = $OnText
+        $Badge.Background = New-Brush '#10281F'; $Badge.Child.Foreground = New-Brush '#5BF0B0'; $Badge.Child.Text = $OnText
     } else {
-        $Badge.Background = New-Brush '#1E2230'; $Badge.Child.Foreground = New-Brush '#8A90A2'; $Badge.Child.Text = $OffText
+        $Badge.Background = New-Brush '#1A2236'; $Badge.Child.Foreground = New-Brush '#8C97AE'; $Badge.Child.Text = $OffText
     }
 }
 
 function New-Card {
     $b = New-Object System.Windows.Controls.Border
-    $b.Background = New-Brush '#141821'
-    $b.BorderBrush = New-Brush '#232838'
+    $b.Background = New-Brush '#131A2B'
+    $b.BorderBrush = New-Brush '#1F2940'
     $b.BorderThickness = New-Thickness 1 1 1 1
     $b.CornerRadius = New-Object System.Windows.CornerRadius(12)
     $b.Padding = New-Thickness 18 14 18 14
@@ -298,8 +299,8 @@ function Build-GameList {
         $tile.Width = 248
         $tile.Margin = New-Thickness 0 0 14 14
         $tile.CornerRadius = New-Object System.Windows.CornerRadius(12)
-        $tile.Background = New-Brush '#141821'
-        $tile.BorderBrush = New-Brush '#232838'
+        $tile.Background = New-Brush '#131A2B'
+        $tile.BorderBrush = New-Brush '#1F2940'
         $tile.BorderThickness = New-Thickness 1 1 1 1
         $tile.ToolTip = "$($g.Name)`n$($g.Path)"
 
@@ -354,9 +355,28 @@ function Update-State {
     $pct = [int][math]::Round(100 * $active / [math]::Max($total, 1))
     $script:UI.ScoreText.Text = "$pct%"
     $script:UI.ScoreDetail.Text = "$active de $total ajustes ativos"
-    $script:UI.ScoreBar.Value = $pct
+    Set-ScoreArc $pct
+    $script:UI.StatusPillText.Text = "$active de $total ajustes ativos"
+    $script:UI.StatActive.Text = "$active de $total"
+    $boosted = @($script:Games | Where-Object { Test-GameBoosted $_ }).Count
+    $script:UI.StatGames.Text = "$boosted de $($script:Games.Count)"
+    $undo = @(Get-BackedUpIds).Count
+    $script:UI.StatUndo.Text = $(if ($undo) { "$undo item(ns)" } else { 'Nada aplicado' })
     Build-GameList
     Set-Status 'Pronto.'
+}
+
+# Anel do Painel: arco de 0 a 360° a partir do topo, no sentido horário.
+function Set-ScoreArc {
+    param([double]$Pct)
+    $c = 62; $r = 57
+    if ($Pct -le 0) { $script:UI.ScoreArc.Data = $null; return }
+    if ($Pct -ge 99.9) { $script:UI.ScoreArc.Data = New-Object System.Windows.Media.EllipseGeometry((New-Object System.Windows.Point($c, $c)), $r, $r); return }
+    $a = $Pct / 100 * 2 * [math]::PI
+    $inv = [Globalization.CultureInfo]::InvariantCulture
+    $x = ($c + $r * [math]::Sin($a)).ToString('0.##', $inv); $y = ($c - $r * [math]::Cos($a)).ToString('0.##', $inv)
+    $large = if ($Pct -gt 50) { 1 } else { 0 }
+    $script:UI.ScoreArc.Data = [System.Windows.Media.Geometry]::Parse("M $c,$($c - $r) A $r,$r 0 $large 1 $x,$y")
 }
 
 function Get-CheckedTweaks {
@@ -538,7 +558,7 @@ function Start-GameScan {
         $added = @(Add-DetectedGames $found -Automatic)
         if ($added.Count) {
             Write-Log "$($added.Count) jogo(s) novo(s) encontrado(s): $($added -join ', ')."
-            Build-GameList
+            Update-State   # lista de jogos e contagem "Jogos otimizados" do Painel
         }
         Start-CoverFetch
     }
@@ -562,6 +582,8 @@ function Show-UpdateBanner {
     $script:UI.UpdateDetail.Text = "Você está na $($script:AppVersion). A atualização baixa o instalador oficial do GitHub e mantém suas otimizações."
     $script:UI.UpdateInfo.Text = "Versão $($Release.Version) disponível (você tem a $($script:AppVersion))."
     $script:UI.UpdateBanner.Visibility = 'Visible'
+    $script:UI.StatUpdate.Text = "Versão $($Release.Version) disponível"
+    $script:UI.StatUpdate.Foreground = New-Brush '#C4B5FD'
     Write-Log "Atualização disponível: $($Release.Version)."
 }
 
@@ -569,8 +591,9 @@ function Show-UpdateBanner {
 function Start-UpdateCheck {
     Start-InBackground 'param($p) Get-LatestRelease' {
         param($rel, $err)
-        if ($err) { Write-Log "Verificação de atualização falhou: $err" 'WARN'; return }
+        if ($err) { $script:UI.StatUpdate.Text = 'Sem conexão'; Write-Log "Verificação de atualização falhou: $err" 'WARN'; return }
         if ($rel -and (Test-NewerVersion $rel.Version $script:AppVersion)) { Show-UpdateBanner $rel }
+        else { $script:UI.StatUpdate.Text = "Em dia (v$($script:AppVersion))" }
     }
 }
 
@@ -608,6 +631,9 @@ namespace Overclutch {
         }
         [DllImport("shell32.dll")] static extern int SHGetPropertyStoreForWindow(IntPtr h, ref Guid iid, out IPropertyStore s);
         [DllImport("shell32.dll")] public static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string id);
+        [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref int value, int size);
+        // Windows 11: cantos arredondados (DWMWA_WINDOW_CORNER_PREFERENCE = 33, ROUND = 2).
+        public static void RoundCorners(IntPtr hwnd) { int v = 2; DwmSetWindowAttribute(hwnd, 33, ref v, 4); }
 
         static readonly Guid AppModel = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3");
         static void Set(IPropertyStore s, uint pid, string value) {
@@ -644,8 +670,41 @@ function Set-TaskbarIdentity {
         $script:Window.Add_SourceInitialized({
             $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($script:Window)).Handle
             try { [Overclutch.Taskbar]::Apply($hwnd, $script:AppUserModelId, $script:LauncherExe, $script:AppName) } catch { }
+            try { [Overclutch.Taskbar]::RoundCorners($hwnd) } catch { }
         })
     } catch { }
+}
+
+# Barra de título própria: minimizar, maximizar e fechar. Maximizada, a janela sem
+# moldura passa um pouco da tela; a margem compensa.
+function Register-WindowChrome {
+    $script:UI.BtnMin.Add_Click({ $script:Window.WindowState = 'Minimized' })
+    $script:UI.BtnMax.Add_Click({
+        $script:Window.WindowState = $(if ($script:Window.WindowState -eq 'Maximized') { 'Normal' } else { 'Maximized' })
+    })
+    $script:UI.BtnClose.Add_Click({ $script:Window.Close() })
+    $script:Window.Add_StateChanged({
+        $max = $script:Window.WindowState -eq 'Maximized'
+        $script:UI.RootBorder.Margin = New-Thickness $(if ($max) { 7 } else { 0 }) $(if ($max) { 7 } else { 0 }) $(if ($max) { 7 } else { 0 }) $(if ($max) { 7 } else { 0 })
+        $script:UI.BtnMax.ToolTip = $(if ($max) { 'Restaurar' } else { 'Maximizar' })
+    })
+}
+
+# Cartões de hardware do Painel: coleta em segundo plano (WMI demora um pouco).
+function Start-SystemInfo {
+    Start-InBackground 'param($p) Get-SystemInfo' {
+        param($info, $err)
+        if (-not $info) { return }
+        $map = @{ CpuText = 'Cpu'; GpuText = 'Gpu'; RamText = 'Ram'; DiskText = 'Disk'; OsText = 'Os'; OsVersionText = 'OsVersion'; OsBuildText = 'OsBuild'; DiskModelText = 'DiskModel' }
+        foreach ($k in $map.Keys) { $v = "$($info.($map[$k]))"; $script:UI[$k].Text = $(if ($v) { $v } else { '—' }) }
+        foreach ($chip in 'CpuChip', 'GpuChip', 'RamChip', 'DiskChip') {
+            $v = "$($info.$chip)"
+            $script:UI[$chip].Text = $v
+            $script:UI[$chip].Parent.Visibility = $(if ($v) { 'Visible' } else { 'Collapsed' })
+        }
+        foreach ($k in 'CpuText', 'GpuText', 'RamText', 'DiskText') { $script:UI[$k].ToolTip = $script:UI[$k].Text }
+        if ($info.CpuThreads) { $script:UI.CpuText.ToolTip = "$($info.Cpu): $($info.CpuThreads)" }
+    }
 }
 
 function Start-App {
@@ -672,15 +731,20 @@ function Start-App {
             $img.EndInit()
             $img.Freeze()
             $script:Window.Icon = $img
+            $script:UI.TitleLogo.Source = $img
         } catch { }
     }
     if (Test-DryRun) {
-        $script:UI.ModeText.Text = 'MODO SIMULAÇÃO: nada é alterado de verdade.'
+        $script:UI.ModeText.Text = 'Modo simulação: nada é alterado de verdade.'
         $script:UI.ModeText.Foreground = New-Brush '#FBBF24'
+        $script:UI.ModeBadge.Visibility = 'Visible'
         $script:Window.Title = "$($script:AppName) (simulação)"
     } else {
         $script:UI.ModeText.Text = 'Executando como administrador'
     }
+    $first = ("$env:USERNAME" -split '[\s._-]')[0]
+    $script:UI.GreetingText.Text = $(if ($first) { "Olá, " + $first.Substring(0, 1).ToUpper() + $first.Substring(1) } else { 'Olá' })
+    Register-WindowChrome
 
     $script:Core.OnLog = {
         param($line)
@@ -688,11 +752,7 @@ function Start-App {
         $script:UI.LogBox.ScrollToEnd()
     }
 
-    $info = Get-SystemInfo
-    $script:UI.CpuText.Text = $info.Cpu
-    $script:UI.GpuText.Text = $info.Gpu
-    $script:UI.RamText.Text = $info.Ram
-    $script:UI.OsText.Text  = $info.Os
+    Start-SystemInfo
 
     Import-Games
     Build-TweakList

@@ -81,7 +81,12 @@ Step 'Faixa de atualização: Depois' {
 }
 Step 'Capas dos jogos' {
     $withCover = @($script:Games | Where-Object { Test-Path -LiteralPath (Get-CoverFile $_.Path) })
-    Check ($withCover.Count -eq $script:Games.Count) "capas encontradas: $($withCover.Count) de $($script:Games.Count)"
+    Check ($withCover.Count -ge 1) "capas encontradas: $($withCover.Count) de $($script:Games.Count) (sem capa, o cartão mostra o ícone do jogo)"
+}
+Step 'Painel: resumo e hardware' {
+    Check ($script:UI.StatGames.Text -match "de $($script:Games.Count)$") "Jogos otimizados conta os $($script:Games.Count) jogos ($($script:UI.StatGames.Text))"
+    Check ($script:UI.CpuText.Text -notin '...', '') "hardware carregado ($($script:UI.CpuText.Text), $($script:UI.GpuText.Text))"
+    Check ($null -ne $script:UI.ScoreArc.Data -or $script:UI.ScoreText.Text -eq '0%') 'anel de progresso desenhado'
 }
 Step 'Registro de atividades' { Check ($script:UI.LogBox.Text.Length -gt 0) 'Registro mostra as ações' }
 
