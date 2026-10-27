@@ -15,7 +15,7 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 
 ## Instalação
 
-Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/SEU-USUARIO/overclutch/releases/latest) e siga o assistente.
+Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/freitasscaio/overclutch/releases/latest) e siga o assistente.
 
 - Não pede senha de administrador para instalar. O app pede permissão (UAC) só quando vai otimizar.
 - Cria atalhos no Menu Iniciar (normal e modo simulação) e, se você quiser, na Área de Trabalho.
@@ -25,7 +25,7 @@ Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/SEU
 ### Para desenvolvedores
 
 ```powershell
-git clone https://github.com/SEU-USUARIO/overclutch.git
+git clone https://github.com/freitasscaio/overclutch.git
 cd overclutch
 .\Iniciar.bat                                              # roda direto da pasta
 powershell -ExecutionPolicy Bypass -File install.ps1       # instalação rápida, sem assistente
@@ -101,7 +101,7 @@ tests/Run-Tests.ps1 testes (não alteram o sistema)
 ## Site
 
 A página fica em `site/index.html`: um arquivo só, sem build, com as imagens em `site/assets/`.
-No bloco `CONFIG`, no fim do arquivo, troque `SEU-USUARIO` pelo seu usuário do GitHub nos links do repositório e do download.
+No bloco `CONFIG`, no fim do arquivo, troque `freitasscaio` pelo seu usuário do GitHub nos links do repositório e do download.
 
 Para ver no seu PC:
 
