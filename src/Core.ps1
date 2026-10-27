@@ -275,7 +275,14 @@ function Clear-TempFiles {
             }
         }
     }
-    [pscustomobject]@{ MB = [math]::Round($freed / 1MB, 1); Files = $files; Skipped = $skipped }
+    [pscustomobject]@{ MB = [math]::Round($freed / 1MB, 1); Bytes = $freed; Files = $files; Skipped = $skipped }
+}
+
+function Format-Size {
+    param([long]$Bytes)
+    if ($Bytes -ge 1GB) { return '{0:N1} GB' -f ($Bytes / 1GB) }
+    if ($Bytes -ge 1MB) { return '{0:N1} MB' -f ($Bytes / 1MB) }
+    '{0:N0} KB' -f [math]::Ceiling($Bytes / 1KB)
 }
 
 function Clear-Dns {

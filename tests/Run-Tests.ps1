@@ -106,6 +106,8 @@ Assert (-not (Test-Path "$fakeTemp\a\b")) 'Subpasta vazia removida'
 Assert (Test-Path "$outside\importante.txt") 'Junção NÃO foi seguida (arquivo fora do TEMP intacto)'
 cmd /c rmdir "$fakeTemp\juncao" | Out-Null
 
+Assert ((Format-Size 500) -eq '1 KB' -and (Format-Size (3MB)) -match '^3[,.]0 MB$' -and (Format-Size (2GB)) -match '^2[,.]0 GB$') 'Tamanho formatado em KB, MB e GB'
+
 Write-Host 'Execução em segundo plano'
 . (Join-Path $root 'src\UI.ps1')
 function Set-Status { param($Text) }   # sem janela nos testes

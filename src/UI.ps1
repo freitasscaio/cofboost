@@ -25,7 +25,8 @@ function New-BackgroundShell {
     $wrapper = {
         param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress)
         . $CoreFile
-        . $UpdateFile
+        # Sem o Update.ps1 (instalação incompleta) só a atualização deixa de funcionar.
+        if (Test-Path -LiteralPath $UpdateFile) { . $UpdateFile }
         Initialize-Core -DataDir $DataDir -DryRun:$DryRun
         & ([scriptblock]::Create($Body)) $Progress
     }
@@ -404,9 +405,18 @@ function Register-Handlers {
     $script:UI.BtnCleanTemp.Add_Click({
         Invoke-Busy 'Limpando arquivos temporários...' {
             $r = Invoke-InBackground 'Limpando arquivos temporários' 'param($p) Clear-TempFiles -Progress $p'
-            $prefix = if (Test-DryRun) { '[SIMULAÇÃO] ' } else { '' }
-            Write-Log "${prefix}Temporários: $($r.Files) arquivos apagados ($($r.MB) MB), $($r.Skipped) em uso foram mantidos."
-            Show-Message "$($r.MB) MB liberados ($($r.Files) arquivos).`n$($r.Skipped) arquivo(s) em uso por outros programas foram mantidos." | Out-Null
+            $size = Format-Size $r.Bytes
+            $kept = if ($r.Skipped) { "`n$($r.Skipped) arquivo(s) em uso por outros programas foram mantidos." } else { '' }
+            if (Test-DryRun) {
+                Write-Log "[SIMULAÇÃO] Temporários: $($r.Files) arquivos ($size) seriam apagados."
+                Show-Message "Modo simulação: $size seriam liberados ($($r.Files) arquivos). Nada foi apagado." | Out-Null
+            } elseif ($r.Files -eq 0) {
+                Write-Log "Temporários: nada para apagar.$($kept -replace "`n", ' ')"
+                Show-Message "As pastas temporárias já estão limpas.$kept" | Out-Null
+            } else {
+                Write-Log "Temporários: $($r.Files) arquivos apagados ($size).$($kept -replace "`n", ' ')"
+                Show-Message "$size liberados ($($r.Files) arquivos).$kept" | Out-Null
+            }
         }
     })
 

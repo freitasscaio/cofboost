@@ -119,6 +119,12 @@ Para publicar de graça, arraste a pasta `site` no **Netlify Drop** (app.netlify
 powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-Tests.ps1
 ```
 
+Teste da interface (abre o app em modo simulação e clica em todos os botões; precisa de uma sessão com tela):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-UiTests.ps1
+```
+
 ## Avisos
 
 - Os ganhos de FPS variam muito de PC para PC. Os maiores ganhos costumam aparecer em PCs com o Windows "de fábrica".
