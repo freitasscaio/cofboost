@@ -54,6 +54,7 @@ $pngs = foreach ($s in $sizes) {
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
     if ($s -eq 64) { $bmp.Save((Join-Path $root 'site\assets\favicon.png'), [System.Drawing.Imaging.ImageFormat]::Png) }
+    if ($s -eq 256) { $bmp.Save((Join-Path $root 'assets\overclutch.png'), [System.Drawing.Imaging.ImageFormat]::Png) }
     $bmp.Dispose()
     , $ms.ToArray()
 }

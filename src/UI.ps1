@@ -389,9 +389,69 @@ function Register-Handlers {
     $script:UI.BtnOpenData.Add_Click({ Start-Process 'explorer.exe' $script:Core.DataDir })
 }
 
+# Sem isso a barra de tarefas agrupa a janela com o PowerShell e mostra o ícone dele.
+# O mesmo id está nos atalhos criados pelo instalador.
+$script:AppUserModelId = 'Overclutch.App'
+
+$script:TaskbarCode = @'
+using System;
+using System.Runtime.InteropServices;
+namespace Overclutch {
+    public static class Taskbar {
+        [StructLayout(LayoutKind.Sequential)] struct PROPERTYKEY { public Guid fmtid; public uint pid; }
+        // PROPVARIANT tem 24 bytes no x64; só usamos vt e o ponteiro da string.
+        [StructLayout(LayoutKind.Explicit, Size = 24)] struct PROPVARIANT { [FieldOffset(0)] public ushort vt; [FieldOffset(8)] public IntPtr p; }
+        [ComImport, Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        interface IPropertyStore {
+            int GetCount(out uint c); int GetAt(uint i, out PROPERTYKEY k);
+            int GetValue(ref PROPERTYKEY k, out PROPVARIANT v); int SetValue(ref PROPERTYKEY k, ref PROPVARIANT v); int Commit();
+        }
+        [DllImport("shell32.dll")] static extern int SHGetPropertyStoreForWindow(IntPtr h, ref Guid iid, out IPropertyStore s);
+        [DllImport("shell32.dll")] public static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string id);
+
+        static readonly Guid AppModel = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3");
+        static void Set(IPropertyStore s, uint pid, string value) {
+            var k = new PROPERTYKEY { fmtid = AppModel, pid = pid };
+            var v = new PROPVARIANT { vt = 31 /* VT_LPWSTR */, p = Marshal.StringToCoTaskMemUni(value) };
+            try { s.SetValue(ref k, ref v); } finally { Marshal.FreeCoTaskMem(v.p); }
+        }
+
+        // Grava na janela o id do app e, se houver o Overclutch.exe, o que o Windows
+        // deve abrir e qual ícone usar quando a janela é fixada na barra de tarefas.
+        public static void Apply(IntPtr hwnd, string appId, string exe, string name) {
+            Guid iid = typeof(IPropertyStore).GUID; IPropertyStore s;
+            if (SHGetPropertyStoreForWindow(hwnd, ref iid, out s) != 0) return;
+            try {
+                if (exe != null) {
+                    Set(s, 2, "\"" + exe + "\"");   // RelaunchCommand
+                    Set(s, 3, exe + ",0");          // RelaunchIconResource
+                    Set(s, 4, name);                // RelaunchDisplayNameResource
+                }
+                Set(s, 5, appId);                   // ID
+                s.Commit();
+            } finally { Marshal.ReleaseComObject(s); }
+        }
+    }
+}
+'@
+
+function Set-TaskbarIdentity {
+    try {
+        Add-Type -TypeDefinition $script:TaskbarCode -ErrorAction Stop
+        [void][Overclutch.Taskbar]::SetCurrentProcessExplicitAppUserModelID($script:AppUserModelId)
+        $exe = Join-Path (Split-Path $PSScriptRoot -Parent) 'Overclutch.exe'
+        $script:LauncherExe = if (Test-Path -LiteralPath $exe) { $exe } else { $null }
+        $script:Window.Add_SourceInitialized({
+            $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($script:Window)).Handle
+            try { [Overclutch.Taskbar]::Apply($hwnd, $script:AppUserModelId, $script:LauncherExe, $script:AppName) } catch { }
+        })
+    } catch { }
+}
+
 function Start-App {
     [xml]$xml = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'MainWindow.xaml') -Raw -Encoding UTF8
     $script:Window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xml))
+    Set-TaskbarIdentity
     $script:UI = @{}
     foreach ($node in $xml.SelectNodes("//*[@*[local-name()='Name']]")) {
         $name = ($node.Attributes | Where-Object { $_.LocalName -eq 'Name' } | Select-Object -First 1).Value
@@ -400,7 +460,7 @@ function Start-App {
     }
 
     $script:UI.VersionText.Text = "v$($script:AppVersion)"
-    $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.ico'
+    $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.png'
     if (Test-Path -LiteralPath $iconFile) {
         try { $script:Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([Uri]$iconFile) } catch { }
     }

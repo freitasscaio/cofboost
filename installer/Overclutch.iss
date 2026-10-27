@@ -6,7 +6,7 @@
   #define AppVersion "1.0.0"
 #endif
 #define AppName "Overclutch"
-#define PsArgs "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File"
+#define AppId "Overclutch.App"
 
 [Setup]
 AppId={{6F3C2A1E-8B4D-4E7A-9C51-0D2E7B9A4F63}
@@ -54,21 +54,23 @@ en.UndoFailed=Some optimizations could not be reverted. The backup was kept in %
 Name: "desktopicon"; Description: "{cm:DesktopIcon}"
 
 [Files]
+Source: "..\build\Overclutch.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Overclutch.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Iniciar.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Simular.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs
 Source: "..\assets\overclutch.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\overclutch.png"; DestDir: "{app}\assets"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "{#PsArgs} ""{app}\Overclutch.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\assets\overclutch.ico"
-Name: "{autoprograms}\{cm:SimShortcut}"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "{#PsArgs} ""{app}\Overclutch.ps1"" -DryRun"; WorkingDir: "{app}"; IconFilename: "{app}\assets\overclutch.ico"
-Name: "{autodesktop}\{#AppName}"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "{#PsArgs} ""{app}\Overclutch.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\assets\overclutch.ico"; Tasks: desktopicon
+; AppUserModelID igual ao que o app define em src\UI.ps1: a barra de tarefas mostra o ícone do Overclutch.
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
+Name: "{autoprograms}\{cm:SimShortcut}"; Filename: "{app}\Overclutch.exe"; Parameters: "--simulate"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "{#PsArgs} ""{app}\Overclutch.ps1"""; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
-
+Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
 [Code]
 function DataDir: String;
 begin
@@ -79,16 +81,14 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Code: Integer;
-  Params: String;
 begin
   if CurUninstallStep <> usUninstall then Exit;
   if not FileExists(DataDir + '\backup.json') then Exit;
   if UninstallSilent then Exit;
   if MsgBox(CustomMessage('AskUndo'), mbConfirmation, MB_YESNO) <> IDYES then Exit;
 
-  Params := '{#PsArgs} "' + ExpandConstant('{app}\Overclutch.ps1') + '" -UndoAll';
-  // runas: o Windows mostra o UAC; ewWaitUntilTerminated: espera reverter antes de remover os arquivos.
-  if ShellExec('runas', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Params, '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then
+  // O Overclutch.exe pede o UAC sozinho e espera o PowerShell terminar antes de devolver o código.
+  if Exec(ExpandConstant('{app}\Overclutch.exe'), '--undo-all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then
     DelTree(DataDir, True, True, True)
   else
     MsgBox(FmtMessage(CustomMessage('UndoFailed'), [DataDir]), mbError, MB_OK);

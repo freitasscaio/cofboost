@@ -39,7 +39,7 @@ Precisa do [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install --
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-O build roda os testes e gera `dist\Overclutch-Setup.exe`. A versão vem de `$script:AppVersion` em `src/Core.ps1`.
+O build roda os testes, compila o `Overclutch.exe` (com o `csc.exe` do .NET Framework, que já vem no Windows) e gera `dist\Overclutch-Setup.exe`. A versão vem de `$script:AppVersion` em `src/Core.ps1`.
 
 ### Publicar uma versão
 
@@ -82,6 +82,7 @@ Para adicionar uma otimização nova, inclua um item em `src/Tweaks.ps1`. A apli
 
 ```
 Overclutch.ps1      ponto de entrada (pede administrador)
+launcher/           Overclutch.exe: abre o app sem console e com o ícone na barra de tarefas
 Iniciar.bat         atalho para abrir
 Simular.bat         abre em modo simulação
 install.ps1         instalação rápida para desenvolvimento

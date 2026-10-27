@@ -22,6 +22,22 @@ $core = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src\Core.ps1') -Raw
 if ($core -notmatch "AppVersion\s*=\s*'([^']+)'") { throw 'Versão não encontrada em src\Core.ps1' }
 $version = $Matches[1]
 
+# Overclutch.exe: abre o app sem console. Usa o csc.exe do .NET Framework que vem no Windows.
+$csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+if (-not (Test-Path -LiteralPath $csc)) { throw "Compilador C# não encontrado em $csc" }
+$buildDir = Join-Path $PSScriptRoot 'build'
+New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
+$versionCs = Join-Path $buildDir 'Version.cs'
+Set-Content -LiteralPath $versionCs -Encoding UTF8 -Value @(
+    '[assembly: System.Reflection.AssemblyVersion("' + $version + '.0")]'
+    '[assembly: System.Reflection.AssemblyFileVersion("' + $version + '.0")]'
+)
+& $csc /nologo /target:winexe /platform:x64 /optimize+ `
+    "/win32icon:$(Join-Path $PSScriptRoot 'assets\overclutch.ico')" `
+    "/out:$(Join-Path $buildDir 'Overclutch.exe')" `
+    (Join-Path $PSScriptRoot 'launcher\Launcher.cs') $versionCs
+if ($LASTEXITCODE -ne 0) { throw "csc falhou (código $LASTEXITCODE)." }
+
 & $iscc "/DAppVersion=$version" (Join-Path $PSScriptRoot 'installer\Overclutch.iss')
 if ($LASTEXITCODE -ne 0) { throw "ISCC falhou (código $LASTEXITCODE)." }
 $exe = Join-Path $PSScriptRoot 'dist\Overclutch-Setup.exe'
