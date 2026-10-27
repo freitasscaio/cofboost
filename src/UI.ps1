@@ -400,6 +400,10 @@ function Start-App {
     }
 
     $script:UI.VersionText.Text = "v$($script:AppVersion)"
+    $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.ico'
+    if (Test-Path -LiteralPath $iconFile) {
+        try { $script:Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([Uri]$iconFile) } catch { }
+    }
     if (Test-DryRun) {
         $script:UI.ModeText.Text = 'MODO SIMULAÇÃO: nada é alterado de verdade.'
         $script:UI.ModeText.Foreground = New-Brush '#FBBF24'

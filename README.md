@@ -1,6 +1,6 @@
 # Overclutch
 
-Otimizador de Windows para jogos: mais FPS e menos input lag em 1 clique, com **todas as alterações reversíveis**.
+Otimizador de Windows para jogos: mais FPS e menos input lag em 1 clique, com **todas as alterações reversíveis**. Grátis e open source ([MIT](LICENSE)).
 
 Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1 + WPF).
 
@@ -15,21 +15,42 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 
 ## Instalação
 
+Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/SEU-USUARIO/overclutch/releases/latest) e siga o assistente.
+
+- Não pede senha de administrador para instalar. O app pede permissão (UAC) só quando vai otimizar.
+- Cria atalhos no Menu Iniciar (normal e modo simulação) e, se você quiser, na Área de Trabalho.
+- Aparece em **Configurações > Aplicativos instalados**. Ao desinstalar, ele pergunta se você quer reverter as otimizações antes.
+- Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações > Executar assim mesmo**. Isso acontece porque o instalador ainda não tem assinatura digital.
+
+### Para desenvolvedores
+
 ```powershell
 git clone https://github.com/SEU-USUARIO/overclutch.git
 cd overclutch
-powershell -ExecutionPolicy Bypass -File install.ps1
+.\Iniciar.bat                                              # roda direto da pasta
+powershell -ExecutionPolicy Bypass -File install.ps1       # instalação rápida, sem assistente
 ```
 
-Isso copia o app para `%LOCALAPPDATA%\Programs\Overclutch` e cria atalhos na Área de Trabalho e no Menu Iniciar.
-Também dá para abrir sem instalar, com um duplo clique em `Iniciar.bat`.
+## Gerar o instalador
 
-Para desinstalar (use **Desfazer todas as otimizações** no app antes):
+Precisa do [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install --id JRSoftware.InnoSetup -e`).
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
+powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
+O build roda os testes e gera `dist\Overclutch-Setup.exe`. A versão vem de `$script:AppVersion` em `src/Core.ps1`.
+
+### Publicar uma versão
+
+O workflow `.github/workflows/release.yml` roda os testes em todo push. Ao criar uma tag, ele gera o instalador e publica no GitHub Releases:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+O site baixa sempre de `releases/latest/download/Overclutch-Setup.exe`, então não precisa mudar o link a cada versão.
 ## Otimizações
 
 | Categoria | Ajuste | Recomendado |
@@ -60,10 +81,15 @@ Para adicionar uma otimização nova, inclua um item em `src/Tweaks.ps1`. A apli
 ## Estrutura
 
 ```
-Overclutch.ps1        ponto de entrada (pede administrador)
+Overclutch.ps1      ponto de entrada (pede administrador)
 Iniciar.bat         atalho para abrir
 Simular.bat         abre em modo simulação
-install.ps1         instala/desinstala
+install.ps1         instalação rápida para desenvolvimento
+build.ps1           testes + instalador (dist\Overclutch-Setup.exe)
+installer/          script do Inno Setup
+assets/             ícone do app
+tools/make-icon.ps1 gera o ícone
+site/               site do projeto
 src/Core.ps1        backup, registro, log, ponto de restauração, limpeza
 src/Tweaks.ps1      catálogo de otimizações
 src/Games.ps1       detecção de jogos e boost por executável
@@ -72,16 +98,10 @@ src/MainWindow.xaml layout da interface (WPF)
 tests/Run-Tests.ps1 testes (não alteram o sistema)
 ```
 
-## Site de vendas
+## Site
 
-A página fica em `site/index.html`. É uma página só, sem build, e as imagens ficam em `site/assets/`.
-Tudo o que muda com frequência está no bloco `CONFIG`, no fim do arquivo:
-
-- `checkout`: links de pagamento de cada plano (Kiwify, Hotmart, Mercado Pago, Stripe...)
-- `plans`: nomes, preços e benefícios
-- `benchmarks`: FPS antes/depois. **Coloque só medições reais.** Com a lista vazia, a seção fica escondida.
-- `testimonials`: depoimentos reais e autorizados. Com a lista vazia, a seção fica escondida.
-- `support`, `terms`, `privacy`: links do rodapé
+A página fica em `site/index.html`: um arquivo só, sem build, com as imagens em `site/assets/`.
+No bloco `CONFIG`, no fim do arquivo, troque `SEU-USUARIO` pelo seu usuário do GitHub nos links do repositório e do download.
 
 Para ver no seu PC:
 
@@ -89,8 +109,7 @@ Para ver no seu PC:
 python -m http.server 8765 --directory site
 ```
 
-Para publicar de graça: **GitHub Pages** (Settings → Pages → pasta `/site`), **Netlify** ou **Vercel**: basta arrastar a pasta `site`.
-
+Para publicar de graça, arraste a pasta `site` no **Netlify Drop** (app.netlify.com/drop) ou importe o repositório na **Vercel** com `site` como diretório raiz.
 ## Testes
 
 ```powershell

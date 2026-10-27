@@ -1,0 +1,44 @@
+# Testa em todo push/PR. Ao criar uma tag v* (ex.: git tag v1.0.0 && git push --tags),
+# gera o Overclutch-Setup.exe e publica no GitHub Releases. O site baixa sempre de
+# releases/latest/download/Overclutch-Setup.exe.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Testes
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-Tests.ps1
+
+      - name: Instalar Inno Setup
+        shell: powershell
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+
+      - name: Gerar instalador
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 -SkipTests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Overclutch-Setup
+          path: dist/Overclutch-Setup.exe
+
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Overclutch-Setup.exe
+          generate_release_notes: true
