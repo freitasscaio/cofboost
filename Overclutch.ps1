@@ -33,6 +33,7 @@ $src = Join-Path $PSScriptRoot 'src'
 . (Join-Path $src 'Core.ps1')
 . (Join-Path $src 'Tweaks.ps1')
 . (Join-Path $src 'Games.ps1')
+. (Join-Path $src 'Update.ps1')
 . (Join-Path $src 'UI.ps1')
 
 if ($UndoAll) {

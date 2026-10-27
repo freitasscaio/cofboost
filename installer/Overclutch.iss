@@ -71,7 +71,22 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\Overclutch.exe"; WorkingDir: 
 
 [Run]
 Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
+; Atualização pelo próprio app (/SILENT /UPDATE=1): reabre o Overclutch no fim.
+Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; Flags: nowait; Check: IsUpdate
+
 [Code]
+function IsUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:UPDATE|0}') = '1';
+end;
+
+// Na atualização pelo app, dá tempo para a janela antiga fechar antes de copiar os arquivos.
+function InitializeSetup: Boolean;
+begin
+  if IsUpdate then Sleep(3000);
+  Result := True;
+end;
+
 function DataDir: String;
 begin
   Result := ExpandConstant('{commonappdata}\Overclutch');

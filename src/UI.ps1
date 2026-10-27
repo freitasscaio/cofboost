@@ -16,21 +16,31 @@ function Set-Status { param([string]$Text) $script:UI.StatusText.Text = $Text; U
 
 $script:CoreFile = Join-Path $PSScriptRoot 'Core.ps1'
 
-# Roda $Body (texto de script que recebe $Progress) em outra thread com o Core carregado,
-# mantendo a janela respondendo. Retorna o último objeto que o script emitir.
-function Invoke-InBackground {
-    param([string]$Message, [string]$Body)
-    $progress = [hashtable]::Synchronized(@{})
+$script:UpdateFile = Join-Path $PSScriptRoot 'Update.ps1'
+
+# PowerShell em outra thread com o Core e o Update carregados, pronto para rodar $Body
+# (texto de script que recebe $Progress).
+function New-BackgroundShell {
+    param([string]$Body, $Progress)
     $wrapper = {
-        param($CoreFile, $DataDir, $DryRun, $Body, $Progress)
+        param($CoreFile, $UpdateFile, $DataDir, $DryRun, $Body, $Progress)
         . $CoreFile
+        . $UpdateFile
         Initialize-Core -DataDir $DataDir -DryRun:$DryRun
         & ([scriptblock]::Create($Body)) $Progress
     }
     $ps = [PowerShell]::Create()
+    [void]$ps.AddScript($wrapper.ToString()).AddArgument($script:CoreFile).AddArgument($script:UpdateFile).
+        AddArgument($script:Core.DataDir).AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($Progress)
+    $ps
+}
+
+# Roda $Body em segundo plano mantendo a janela respondendo. Retorna o último objeto emitido.
+function Invoke-InBackground {
+    param([string]$Message, [string]$Body)
+    $progress = [hashtable]::Synchronized(@{})
+    $ps = New-BackgroundShell $Body $progress
     try {
-        [void]$ps.AddScript($wrapper.ToString()).AddArgument($script:CoreFile).AddArgument($script:Core.DataDir).
-            AddArgument([bool]$script:Core.DryRun).AddArgument($Body).AddArgument($progress)
         $handle = $ps.BeginInvoke()
         while (-not $handle.IsCompleted) {
             $text = $Message
@@ -42,6 +52,30 @@ function Invoke-InBackground {
         if ($ps.Streams.Error.Count) { throw $ps.Streams.Error[0].Exception }
         $result | Select-Object -Last 1
     } finally { $ps.Dispose() }
+}
+
+# Como Invoke-InBackground, mas não espera: chama $OnDone ($result, $errorMessage) na
+# thread da janela quando terminar. Usado na verificação de atualização ao abrir.
+$script:BackgroundJobs = @{}
+function Start-InBackground {
+    param([string]$Body, [scriptblock]$OnDone)
+    $ps = New-BackgroundShell $Body ([hashtable]::Synchronized(@{}))
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(300)
+    $script:BackgroundJobs[$timer] = @{ Shell = $ps; Handle = $ps.BeginInvoke(); OnDone = $OnDone }
+    $timer.Add_Tick({
+        $job = $script:BackgroundJobs[$this]
+        if (-not $job.Handle.IsCompleted) { return }
+        $this.Stop()
+        $script:BackgroundJobs.Remove($this)
+        $result = $null; $err = $null
+        try {
+            $result = $job.Shell.EndInvoke($job.Handle) | Select-Object -Last 1
+            if ($job.Shell.Streams.Error.Count) { $err = $job.Shell.Streams.Error[0].Exception.Message }
+        } catch { $err = $_.Exception.Message } finally { $job.Shell.Dispose() }
+        & $job.OnDone $result $err
+    })
+    $timer.Start()
 }
 
 function Invoke-RestorePointInBackground {
@@ -387,6 +421,59 @@ function Register-Handlers {
 
     $script:UI.BtnOpenRestore.Add_Click({ Start-Process 'rstrui.exe' })
     $script:UI.BtnOpenData.Add_Click({ Start-Process 'explorer.exe' $script:Core.DataDir })
+
+    $script:UI.BtnUpdateNow.Add_Click({ Invoke-UpdateNow })
+    $script:UI.BtnUpdateLater.Add_Click({ $script:UI.UpdateBanner.Visibility = 'Collapsed' })
+    $script:UI.BtnCheckUpdate.Add_Click({
+        Invoke-Busy 'Verificando atualizações...' {
+            $rel = Invoke-InBackground 'Verificando atualizações' 'param($p) Get-LatestRelease'
+            if (Test-NewerVersion $rel.Version $script:AppVersion) {
+                Show-UpdateBanner $rel
+                $answer = Show-Message "A versão $($rel.Version) está disponível (você tem a $($script:AppVersion)).`n`nAtualizar agora?" 'Question' 'YesNo'
+                if ($answer -eq 'Yes') { $script:UpdateAfterBusy = $true }
+            } else {
+                $script:UI.UpdateInfo.Text = "Você está na versão mais recente ($($script:AppVersion))."
+                Show-Message "Você já está na versão mais recente ($($script:AppVersion))." | Out-Null
+            }
+        }
+        if ($script:UpdateAfterBusy) { $script:UpdateAfterBusy = $false; Invoke-UpdateNow }
+    })
+}
+
+# ---------------------------------------------------------------- atualização
+
+function Show-UpdateBanner {
+    param($Release)
+    $script:PendingUpdate = $Release
+    $script:UI.UpdateTitle.Text = "Nova versão $($Release.Version) disponível"
+    $script:UI.UpdateDetail.Text = "Você está na $($script:AppVersion). A atualização baixa o instalador oficial do GitHub e mantém suas otimizações."
+    $script:UI.UpdateInfo.Text = "Versão $($Release.Version) disponível (você tem a $($script:AppVersion))."
+    $script:UI.UpdateBanner.Visibility = 'Visible'
+    Write-Log "Atualização disponível: $($Release.Version)."
+}
+
+# Ao abrir: consulta o GitHub sem travar a janela. Sem internet, não mostra nada.
+function Start-UpdateCheck {
+    Start-InBackground 'param($p) Get-LatestRelease' {
+        param($rel, $err)
+        if ($err) { Write-Log "Verificação de atualização falhou: $err" 'WARN'; return }
+        if ($rel -and (Test-NewerVersion $rel.Version $script:AppVersion)) { Show-UpdateBanner $rel }
+    }
+}
+
+function Invoke-UpdateNow {
+    $rel = $script:PendingUpdate
+    if (-not $rel -or -not (Test-ReleaseInfo $rel)) { return }
+    $script:UpdateStarted = $false
+    Invoke-Busy "Baixando a versão $($rel.Version)..." {
+        # Os valores já passaram por Test-ReleaseInfo (só dígitos, URL do repositório e hex).
+        $body = "param(`$p) Save-UpdateInstaller ([pscustomobject]@{ Version = '$($rel.Version)'; Url = '$($rel.Url)'; Size = $([long]$rel.Size); Sha256 = '$($rel.Sha256)' })"
+        $path = Invoke-InBackground "Baixando a versão $($rel.Version)" $body
+        Start-UpdateInstaller $path
+        $script:UpdateStarted = $true
+    }
+    # O instalador substitui os arquivos e reabre o app; esta janela fecha para não atrapalhar.
+    if ($script:UpdateStarted) { $script:Window.Close() }
 }
 
 # Sem isso a barra de tarefas agrupa a janela com o PowerShell e mostra o ícone dele.
@@ -462,7 +549,17 @@ function Start-App {
     $script:UI.VersionText.Text = "v$($script:AppVersion)"
     $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.png'
     if (Test-Path -LiteralPath $iconFile) {
-        try { $script:Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([Uri]$iconFile) } catch { }
+        # CacheOption OnLoad lê o arquivo inteiro e solta na hora; sem isso o PNG fica
+        # travado enquanto o app roda e o instalador não consegue atualizar.
+        try {
+            $img = New-Object System.Windows.Media.Imaging.BitmapImage
+            $img.BeginInit()
+            $img.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $img.UriSource = [Uri]$iconFile
+            $img.EndInit()
+            $img.Freeze()
+            $script:Window.Icon = $img
+        } catch { }
     }
     if (Test-DryRun) {
         $script:UI.ModeText.Text = 'MODO SIMULAÇÃO: nada é alterado de verdade.'
@@ -490,6 +587,8 @@ function Start-App {
     Show-Page 'Home'
     Update-State
     Write-Log "$($script:AppName) $($script:AppVersion) iniciado$(if (Test-DryRun) { ' em modo simulação' })."
+    $script:UI.UpdateInfo.Text = "Versão instalada: $($script:AppVersion). Confere no GitHub se há uma mais nova."
+    Start-UpdateCheck
 
     [void]$script:Window.ShowDialog()
 }

@@ -27,6 +27,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 . (Join-Path $root 'src\Core.ps1')
 . (Join-Path $root 'src\Tweaks.ps1')
 . (Join-Path $root 'src\Games.ps1')
+. (Join-Path $root 'src\Update.ps1')
 
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-test-" + [guid]::NewGuid())
 
@@ -114,6 +115,19 @@ $script:Core.DryRun = $false
 $bg = Invoke-InBackground 'teste' "param(`$p) Clear-TempFiles -Paths @('$fakeTemp') -Progress `$p"
 Assert ($bg.Files -eq 6) "Limpeza em segundo plano retornou resultado ($($bg.Files) arquivos)"
 
+Write-Host 'Atualização'
+Assert (Test-NewerVersion '1.0.2' '1.0.1') '1.0.2 é mais nova que 1.0.1'
+Assert (Test-NewerVersion '1.10.0' '1.9.0') '1.10.0 é mais nova que 1.9.0 (compara número, não texto)'
+Assert (-not (Test-NewerVersion '1.0.1' '1.0.1')) 'Mesma versão não pede atualização'
+Assert (-not (Test-NewerVersion 'abc' '1.0.1')) 'Versão inválida não pede atualização'
+$good = [pscustomobject]@{ Version = '1.2.0'; Url = 'https://github.com/freitasscaio/overclutch/releases/download/v1.2.0/Overclutch-Setup.exe'; Size = 1; Sha256 = ('a' * 64) }
+Assert (Test-ReleaseInfo $good) 'Release do repositório oficial é aceita'
+Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Url'; e = { 'https://evil.example/Overclutch-Setup.exe' } } -ExcludeProperty Url))) 'URL de outro site é recusada'
+Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Version'; e = { "1.0'; rm -r C:\" } } -ExcludeProperty Version))) 'Versão com caracteres estranhos é recusada'
+Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Sha256'; e = { 'xyz' } } -ExcludeProperty Sha256))) 'SHA-256 inválido é recusado'
+$bgUpdate = Invoke-InBackground 'teste' 'param($p) Test-NewerVersion "2.0" "1.0"'
+Assert ($bgUpdate -eq $true) 'Módulo de atualização carrega em segundo plano'
+
 Write-Host 'Jogos'
 Initialize-Core -DataDir $tmp -DryRun
 $found = @(Find-InstalledGames)
@@ -128,7 +142,7 @@ Write-Host 'Interface'
 [xml]$xml = Get-Content -LiteralPath (Join-Path $root 'src\MainWindow.xaml') -Raw -Encoding UTF8
 $window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xml))
 Assert ($null -ne $window) 'XAML carrega'
-foreach ($n in @('BtnBoost', 'BtnUndoAll', 'TweakList', 'GameList', 'LogBox', 'StatusText', 'ContentHost', 'BusyBar') + ('Home', 'Tweaks', 'Games', 'Tools', 'Log' | ForEach-Object { "Page$_"; "Nav$_" })) {
+foreach ($n in @('BtnBoost', 'BtnUndoAll', 'UpdateBanner', 'BtnUpdateNow', 'BtnUpdateLater', 'BtnCheckUpdate', 'UpdateInfo', 'TweakList', 'GameList', 'LogBox', 'StatusText', 'ContentHost', 'BusyBar') + ('Home', 'Tweaks', 'Games', 'Tools', 'Log' | ForEach-Object { "Page$_"; "Nav$_" })) {
     Assert ($null -ne $window.FindName($n)) "Controle $n existe"
 }
 

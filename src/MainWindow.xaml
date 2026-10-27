@@ -165,11 +165,25 @@
     <!-- Conteúdo -->
     <Grid Grid.Column="1">
       <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <Grid x:Name="ContentHost" Grid.Row="0" Margin="34,30,34,10">
+      <!-- Faixa de atualização: aparece quando há versão nova no GitHub -->
+      <Border x:Name="UpdateBanner" Grid.Row="0" Visibility="Collapsed" Margin="34,20,34,0" Padding="18,12"
+              CornerRadius="10" Background="#1D1838" BorderBrush="#8B5CF6" BorderThickness="1">
+        <DockPanel>
+          <Button x:Name="BtnUpdateNow" DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Padding="16,8" Content="Atualizar agora"/>
+          <Button x:Name="BtnUpdateLater" DockPanel.Dock="Right" Style="{StaticResource SecondaryButton}" Padding="14,7" Margin="0,0,10,0" Content="Depois"/>
+          <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+            <TextBlock x:Name="UpdateTitle" Text="Nova versão disponível" Foreground="White" FontWeight="SemiBold" FontSize="14"/>
+            <TextBlock x:Name="UpdateDetail" Text="" Foreground="#B8BDCC" FontSize="12" TextWrapping="Wrap"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <Grid x:Name="ContentHost" Grid.Row="1" Margin="34,30,34,10">
 
         <!-- Início -->
         <ScrollViewer x:Name="PageHome" VerticalScrollBarVisibility="Auto">
@@ -304,6 +318,13 @@
                   <Button x:Name="BtnOpenData" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Abrir pasta"/>
                 </StackPanel>
               </Border>
+              <Border Style="{StaticResource CardStyle}" Margin="0,0,9,18">
+                <StackPanel>
+                  <TextBlock Text="Atualizações" FontWeight="Bold" Foreground="White" FontSize="15"/>
+                  <TextBlock x:Name="UpdateInfo" Text="Confere no GitHub se há uma versão nova do Overclutch." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                  <Button x:Name="BtnCheckUpdate" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Verificar atualizações"/>
+                </StackPanel>
+              </Border>
             </UniformGrid>
           </StackPanel>
         </ScrollViewer>
@@ -320,7 +341,7 @@
       </Grid>
 
       <!-- Barra de status -->
-      <Border Grid.Row="1" Background="#0F1219" BorderBrush="#1C2130" BorderThickness="0,1,0,0" Padding="34,10">
+      <Border Grid.Row="2" Background="#0F1219" BorderBrush="#1C2130" BorderThickness="0,1,0,0" Padding="34,10">
         <DockPanel>
           <ProgressBar x:Name="BusyBar" DockPanel.Dock="Right" Width="160" Height="6" IsIndeterminate="False"
                        Background="#232838" Foreground="#8B5CF6" BorderThickness="0" Visibility="Hidden"/>
