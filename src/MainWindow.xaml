@@ -1,6 +1,6 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Overclutch" Width="1180" Height="760" MinWidth="1000" MinHeight="640"
+        Title="CofBoost" Width="1180" Height="760" MinWidth="1000" MinHeight="640"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         Background="#0D1220" Foreground="#E6EBF5"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" UseLayoutRounding="True"
@@ -304,7 +304,7 @@
       <Grid Grid.Row="0" Background="#0A0F1B">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
           <Image x:Name="TitleLogo" Width="22" Height="22"/>
-          <TextBlock Text="Overclutch" FontFamily="{DynamicResource Display}" FontWeight="SemiBold" FontSize="15" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center"/>
+          <TextBlock Text="CofBoost" FontFamily="{DynamicResource Display}" FontWeight="SemiBold" FontSize="15" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center"/>
           <Border x:Name="ModeBadge" CornerRadius="6" Padding="8,2" Margin="12,0,0,0" Background="#3A2A0A" Visibility="Collapsed" VerticalAlignment="Center">
             <TextBlock Text="Modo simulação" Foreground="#FBBF24" FontSize="11.5" FontWeight="SemiBold"/>
           </Border>
@@ -420,7 +420,7 @@
                   </Border>
                   <StackPanel>
                     <TextBlock x:Name="GreetingText" Style="{StaticResource H1}" Text="Olá"/>
-                    <TextBlock Style="{StaticResource Sub}" Text="Visão geral do seu PC e do que o Overclutch já ajustou."/>
+                    <TextBlock Style="{StaticResource Sub}" Text="Visão geral do seu PC e do que o CofBoost já ajustou."/>
                   </StackPanel>
                 </DockPanel>
 
@@ -676,7 +676,7 @@
             <ScrollViewer x:Name="PageRestore" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
               <StackPanel Margin="0,0,0,16">
                 <TextBlock Style="{StaticResource H1}" Text="Restauração"/>
-                <TextBlock Style="{StaticResource Sub}" Text="Duas camadas de segurança: o backup do Overclutch, que desfaz só o que ele mudou, e os pontos de restauração do Windows."/>
+                <TextBlock Style="{StaticResource Sub}" Text="Duas camadas de segurança: o backup do CofBoost, que desfaz só o que ele mudou, e os pontos de restauração do Windows."/>
                 <UniformGrid Columns="2">
                   <Border Style="{StaticResource CardStyle}" Margin="0,0,8,16">
                     <DockPanel>
@@ -722,7 +722,7 @@
             <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
               <StackPanel Margin="0,0,0,16">
                 <TextBlock Style="{StaticResource H1}" Text="Configurações"/>
-                <TextBlock Style="{StaticResource Sub}" Text="Preferências do Overclutch, atualizações e dados."/>
+                <TextBlock Style="{StaticResource Sub}" Text="Preferências do CofBoost, atualizações e dados."/>
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                   <StackPanel>
                     <TextBlock Style="{StaticResource H2}" Text="Geral" Margin="0,0,0,6"/>
@@ -751,7 +751,7 @@
                       </Border>
                       <StackPanel Margin="16,0,0,0">
                         <TextBlock Style="{StaticResource H2}" Text="Atualizações"/>
-                        <TextBlock x:Name="UpdateInfo" Text="Confere no GitHub se há uma versão nova do Overclutch." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <TextBlock x:Name="UpdateInfo" Text="Confere no GitHub se há uma versão nova do CofBoost." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
                         <Button x:Name="BtnCheckUpdate" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Verificar agora"/>
                       </StackPanel>
                     </DockPanel>
@@ -776,7 +776,7 @@
                   <DockPanel>
                     <Image x:Name="AboutLogo" DockPanel.Dock="Left" Width="44" Height="44" VerticalAlignment="Top"/>
                     <StackPanel Margin="16,0,0,0">
-                      <TextBlock x:Name="AboutVersion" Style="{StaticResource H2}" Text="Overclutch"/>
+                      <TextBlock x:Name="AboutVersion" Style="{StaticResource H2}" Text="CofBoost"/>
                       <TextBlock Text="Otimizador de Windows para jogos. Grátis e de código aberto, sob licença MIT." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,14"/>
                       <Button x:Name="AboutGitHub" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Content="Ver o código no GitHub"/>
                     </StackPanel>

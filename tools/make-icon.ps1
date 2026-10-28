@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Gera assets\overclutch.ico (16 a 256 px) e site\assets\favicon.png.
+    Gera assets\cofboost.ico (16 a 256 px) e site\assets\favicon.png.
     Uso: powershell -ExecutionPolicy Bypass -File tools\make-icon.ps1
 #>
 Add-Type -AssemblyName System.Drawing
@@ -43,7 +43,7 @@ function New-IconBitmap {
     $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
     $textTop = if ($Size -ge 48) { -$Size * 0.08 } else { 0 }
     $rect = New-Object System.Drawing.RectangleF(0, [single]$textTop, $Size, $Size)
-    $g.DrawString('OC', $font, [System.Drawing.Brushes]::White, $rect, $fmt)
+    $g.DrawString('CB', $font, [System.Drawing.Brushes]::White, $rect, $fmt)
     $g.Dispose()
     $bmp
 }
@@ -54,7 +54,7 @@ $pngs = foreach ($s in $sizes) {
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
     if ($s -eq 64) { $bmp.Save((Join-Path $root 'site\assets\favicon.png'), [System.Drawing.Imaging.ImageFormat]::Png) }
-    if ($s -eq 256) { $bmp.Save((Join-Path $root 'assets\overclutch.png'), [System.Drawing.Imaging.ImageFormat]::Png) }
+    if ($s -eq 256) { $bmp.Save((Join-Path $root 'assets\cofboost.png'), [System.Drawing.Imaging.ImageFormat]::Png) }
     $bmp.Dispose()
     , $ms.ToArray()
 }
@@ -74,5 +74,5 @@ for ($i = 0; $i -lt $sizes.Count; $i++) {
 }
 foreach ($p in $pngs) { $w.Write($p) }
 $w.Flush()
-[System.IO.File]::WriteAllBytes((Join-Path $root 'assets\overclutch.ico'), $out.ToArray())
-Write-Host 'assets\overclutch.ico e site\assets\favicon.png gerados.'
+[System.IO.File]::WriteAllBytes((Join-Path $root 'assets\cofboost.ico'), $out.ToArray())
+Write-Host 'assets\cofboost.ico e site\assets\favicon.png gerados.'

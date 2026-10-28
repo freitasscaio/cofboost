@@ -3,7 +3,7 @@
 # Usa só Write-Log do Core, para poder rodar também em segundo plano (Invoke-InBackground).
 
 $script:UpdateRepo  = 'freitasscaio/overclutch'
-$script:UpdateAsset = 'Overclutch-Setup.exe'
+$script:UpdateAsset = 'CofBoost-Setup.exe'
 
 function Enable-Tls12 {
     # O PowerShell 5.1 nem sempre liga o TLS 1.2, que o GitHub exige.
@@ -23,7 +23,7 @@ function Test-ReleaseInfo {
 function Get-LatestRelease {
     Enable-Tls12
     $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/$($script:UpdateRepo)/releases/latest" `
-        -Headers @{ 'User-Agent' = 'Overclutch'; 'Accept' = 'application/vnd.github+json' } -TimeoutSec 15
+        -Headers @{ 'User-Agent' = 'CofBoost'; 'Accept' = 'application/vnd.github+json' } -TimeoutSec 15
     $asset = $rel.assets | Where-Object { $_.name -eq $script:UpdateAsset } | Select-Object -First 1
     $sha = $null
     if ($asset -and $asset.PSObject.Properties['digest'] -and "$($asset.digest)" -match '^sha256:([0-9a-fA-F]{64})$') { $sha = $Matches[1].ToLower() }
@@ -47,12 +47,12 @@ function Save-UpdateInstaller {
     param($Release)
     if (-not (Test-ReleaseInfo $Release)) { throw 'Dados da atualização inválidos.' }
     Enable-Tls12
-    $dir = Join-Path $env:TEMP 'Overclutch-Update'
+    $dir = Join-Path $env:TEMP 'CofBoost-Update'
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    $file = Join-Path $dir "Overclutch-Setup-$($Release.Version).exe"
+    $file = Join-Path $dir "CofBoost-Setup-$($Release.Version).exe"
     Write-Log "Baixando atualização $($Release.Version)..."
     $wc = New-Object System.Net.WebClient
-    $wc.Headers.Add('User-Agent', 'Overclutch')
+    $wc.Headers.Add('User-Agent', 'CofBoost')
     try { $wc.DownloadFile($Release.Url, $file) } finally { $wc.Dispose() }
 
     $size = (Get-Item -LiteralPath $file).Length

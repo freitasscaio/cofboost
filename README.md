@@ -1,4 +1,4 @@
-# Overclutch
+# CofBoost
 
 Otimizador de Windows para jogos: mais FPS e menos input lag em 1 clique, com **todas as alterações reversíveis**. Grátis e open source ([MIT](LICENSE)).
 
@@ -9,15 +9,15 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 - **Otimizar agora (1 clique):** cria um ponto de restauração e aplica as otimizações recomendadas.
 - **25 otimizações** em 6 categorias (Sistema, Jogos, Latência e Input, Rede, Recursos do Windows, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
 - **Limpeza:** arquivos temporários, cache de miniaturas, cache do Windows Update, Lixeira e cache DNS, um por um ou tudo de uma vez.
-- **Restauração:** cria e lista pontos de restauração do Windows e desfaz as otimizações do Overclutch.
+- **Restauração:** cria e lista pontos de restauração do Windows e desfaz as otimizações do CofBoost.
 - **Configurações:** verificar atualizações ao abrir, criar ponto de restauração antes de otimizar, dados e registro.
-- **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\Overclutch\backup.json`, e cada ajuste volta exatamente ao que era.
+- **Desfazer tudo:** antes de mudar qualquer coisa, o valor original é salvo em `C:\ProgramData\CofBoost\backup.json`, e cada ajuste volta exatamente ao que era.
 - **Modo simulação** (`Simular.bat`): mostra no Registro tudo o que seria alterado, sem mudar nada.
 - **Atualização pelo app:** ao abrir, o app consulta o GitHub Releases. Se houver uma versão nova, aparece uma faixa com **Atualizar agora**: o app baixa o instalador oficial, confere o SHA-256 publicado pelo GitHub, instala e reabre. Também dá para verificar em **Ferramentas > Verificar atualizações**.
 
 ## Instalação
 
-Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/freitasscaio/overclutch/releases/latest) e siga o assistente.
+Baixe o **CofBoost-Setup.exe** na página de [Releases](https://github.com/freitasscaio/overclutch/releases/latest) e siga o assistente.
 
 - Não pede senha de administrador para instalar. O app pede permissão (UAC) só quando vai otimizar.
 - Cria atalhos no Menu Iniciar (normal e modo simulação) e, se você quiser, na Área de Trabalho.
@@ -28,7 +28,7 @@ Baixe o **Overclutch-Setup.exe** na página de [Releases](https://github.com/fre
 
 ```powershell
 git clone https://github.com/freitasscaio/overclutch.git
-cd overclutch
+cd cofboost
 .\Iniciar.bat                                              # roda direto da pasta
 powershell -ExecutionPolicy Bypass -File install.ps1       # instalação rápida, sem assistente
 ```
@@ -41,7 +41,7 @@ Precisa do [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install --
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-O build roda os testes, compila o `Overclutch.exe` (com o `csc.exe` do .NET Framework, que já vem no Windows) e gera `dist\Overclutch-Setup.exe`. A versão vem de `$script:AppVersion` em `src/Core.ps1`.
+O build roda os testes, compila o `CofBoost.exe` (com o `csc.exe` do .NET Framework, que já vem no Windows) e gera `dist\CofBoost-Setup.exe`. A versão vem de `$script:AppVersion` em `src/Core.ps1`.
 
 ### Publicar uma versão
 
@@ -52,7 +52,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-O site baixa sempre de `releases/latest/download/Overclutch-Setup.exe`, então não precisa mudar o link a cada versão.
+O site baixa sempre de `releases/latest/download/CofBoost-Setup.exe`, então não precisa mudar o link a cada versão.
 ## Otimizações
 
 | Categoria | Ajuste | Recomendado |
@@ -88,12 +88,12 @@ Para adicionar uma otimização nova, inclua um item em `src/Tweaks.ps1`. A apli
 ## Estrutura
 
 ```
-Overclutch.ps1      ponto de entrada (pede administrador)
-launcher/           Overclutch.exe: abre o app sem console e com o ícone na barra de tarefas
+CofBoost.ps1      ponto de entrada (pede administrador)
+launcher/           CofBoost.exe: abre o app sem console e com o ícone na barra de tarefas
 Iniciar.bat         atalho para abrir
 Simular.bat         abre em modo simulação
 install.ps1         instalação rápida para desenvolvimento
-build.ps1           testes + instalador (dist\Overclutch-Setup.exe)
+build.ps1           testes + instalador (dist\CofBoost-Setup.exe)
 installer/          script do Inno Setup
 assets/             ícone do app e fonte Poppins (licença OFL, assets/fonts/OFL.txt)
 tools/make-icon.ps1 gera o ícone

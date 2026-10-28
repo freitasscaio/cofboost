@@ -1,11 +1,11 @@
-﻿// Overclutch.exe: abre o Overclutch.ps1 sem a janela preta do PowerShell.
+﻿// CofBoost.exe: abre o CofBoost.ps1 sem a janela preta do PowerShell.
 // É um app de janela (winexe), então não cria console; o PowerShell é iniciado com
 // CreateNoWindow. Pede administrador (UAC) se precisar, antes de abrir o PowerShell,
 // para que o script não tenha que se reabrir.
 //
-// Uso:  Overclutch.exe              abre o app (pede administrador)
-//       Overclutch.exe --simulate   modo simulação (não pede administrador)
-//       Overclutch.exe --undo-all   reverte tudo e sai; código de saída 0 = ok
+// Uso:  CofBoost.exe              abre o app (pede administrador)
+//       CofBoost.exe --simulate   modo simulação (não pede administrador)
+//       CofBoost.exe --undo-all   reverte tudo e sai; código de saída 0 = ok
 //
 // Compilado pelo build.ps1 com o csc.exe do .NET Framework que vem no Windows.
 
@@ -16,10 +16,10 @@ using System.IO;
 using System.Reflection;
 using System.Security.Principal;
 
-[assembly: AssemblyTitle("Overclutch")]
-[assembly: AssemblyProduct("Overclutch")]
+[assembly: AssemblyTitle("CofBoost")]
+[assembly: AssemblyProduct("CofBoost")]
 [assembly: AssemblyDescription("Otimizador de Windows para jogos")]
-[assembly: AssemblyCompany("Overclutch contributors")]
+[assembly: AssemblyCompany("CofBoost contributors")]
 [assembly: AssemblyCopyright("MIT License")]
 
 static class Launcher
@@ -51,7 +51,7 @@ static class Launcher
             catch (Win32Exception) { return ErrorCancelled; }
         }
 
-        string script = Path.Combine(dir, "Overclutch.ps1");
+        string script = Path.Combine(dir, "CofBoost.ps1");
         string psArgs = "-NoProfile -ExecutionPolicy Bypass -STA -File \"" + script + "\"";
         if (simulate) psArgs += " -DryRun";
         if (undoAll) psArgs += " -UndoAll";

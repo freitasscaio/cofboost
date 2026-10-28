@@ -1,33 +1,35 @@
-﻿; Instalador do Overclutch (Inno Setup 6).
+﻿; Instalador do CofBoost (Inno Setup 6).
 ; Compile com:  powershell -ExecutionPolicy Bypass -File build.ps1
 ; A versão vem de src\Core.ps1 e é passada pelo build.ps1 via /DAppVersion=...
 
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-#define AppName "Overclutch"
-#define AppId "Overclutch.App"
+#define AppName "CofBoost"
+#define AppId "CofBoost.App"
 
 [Setup]
 AppId={{6F3C2A1E-8B4D-4E7A-9C51-0D2E7B9A4F63}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=Overclutch contributors
+AppPublisher=CofBoost contributors
 AppPublisherURL=https://github.com/freitasscaio/overclutch
 AppSupportURL=https://github.com/freitasscaio/overclutch/issues
 ; Instala só para o usuário atual: não pede administrador para instalar.
 ; O próprio app pede permissão (UAC) quando vai otimizar.
 PrivilegesRequired=lowest
 DefaultDirName={autopf}\{#AppName}
+; O app se chamava Overclutch: quem atualiza passa para a pasta nova (a antiga é apagada abaixo).
+UsePreviousAppDir=no
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
-SetupIconFile=..\assets\overclutch.ico
-UninstallDisplayIcon={app}\assets\overclutch.ico
+SetupIconFile=..\assets\cofboost.ico
+UninstallDisplayIcon={app}\assets\cofboost.ico
 UninstallDisplayName={#AppName}
 OutputDir=..\dist
-OutputBaseFilename=Overclutch-Setup
+OutputBaseFilename=CofBoost-Setup
 WizardStyle=modern
 Compression=lzma2
 SolidCompression=yes
@@ -40,43 +42,49 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
 pt.DesktopIcon=Criar atalho na Área de Trabalho
-pt.SimShortcut=Overclutch (modo simulação)
-pt.LaunchApp=Abrir o Overclutch agora
-pt.AskUndo=Você quer reverter as otimizações do Overclutch antes de desinstalar?%n%nSim: o Windows volta às configurações originais (vai pedir permissão de administrador).%nNão: as otimizações continuam ativas no PC.
+pt.SimShortcut=CofBoost (modo simulação)
+pt.LaunchApp=Abrir o CofBoost agora
+pt.AskUndo=Você quer reverter as otimizações do CofBoost antes de desinstalar?%n%nSim: o Windows volta às configurações originais (vai pedir permissão de administrador).%nNão: as otimizações continuam ativas no PC.
 pt.UndoFailed=Algumas otimizações não puderam ser revertidas. O backup foi mantido em %1 para você tentar de novo.
 en.DesktopIcon=Create a desktop shortcut
-en.SimShortcut=Overclutch (simulation mode)
-en.LaunchApp=Open Overclutch now
-en.AskUndo=Do you want to revert Overclutch's optimizations before uninstalling?%n%nYes: Windows goes back to its original settings (asks for administrator permission).%nNo: the optimizations stay active.
+en.SimShortcut=CofBoost (simulation mode)
+en.LaunchApp=Open CofBoost now
+en.AskUndo=Do you want to revert CofBoost's optimizations before uninstalling?%n%nYes: Windows goes back to its original settings (asks for administrator permission).%nNo: the optimizations stay active.
 en.UndoFailed=Some optimizations could not be reverted. The backup was kept in %1 so you can try again.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopIcon}"
 
 [Files]
-Source: "..\build\Overclutch.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Overclutch.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\CofBoost.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\CofBoost.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Iniciar.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Simular.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs
-Source: "..\assets\overclutch.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
-Source: "..\assets\overclutch.png"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\cofboost.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\cofboost.png"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "..\assets\fonts\*"; DestDir: "{app}\assets\fonts"; Flags: ignoreversion
 
 [InstallDelete]
 Type: files; Name: "{app}\src\Games.ps1"
+; Instalação e atalhos da época em que o app se chamava Overclutch.
+Type: filesandordirs; Name: "{autopf}\Overclutch"
+Type: files; Name: "{autoprograms}\Overclutch.lnk"
+Type: files; Name: "{autoprograms}\Overclutch (modo simulação).lnk"
+Type: files; Name: "{autoprograms}\Overclutch (simulation mode).lnk"
+Type: files; Name: "{autodesktop}\Overclutch.lnk"
 
 [Icons]
-; AppUserModelID igual ao que o app define em src\UI.ps1: a barra de tarefas mostra o ícone do Overclutch.
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
-Name: "{autoprograms}\{cm:SimShortcut}"; Filename: "{app}\Overclutch.exe"; Parameters: "--simulate"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"; Tasks: desktopicon
+; AppUserModelID igual ao que o app define em src\UI.ps1: a barra de tarefas mostra o ícone do CofBoost.
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\CofBoost.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
+Name: "{autoprograms}\{cm:SimShortcut}"; Filename: "{app}\CofBoost.exe"; Parameters: "--simulate"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\CofBoost.exe"; WorkingDir: "{app}"; AppUserModelID: "{#AppId}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
-; Atualização pelo próprio app (/SILENT /UPDATE=1): reabre o Overclutch no fim.
-Filename: "{app}\Overclutch.exe"; WorkingDir: "{app}"; Flags: nowait; Check: IsUpdate
+Filename: "{app}\CofBoost.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
+; Atualização pelo próprio app (/SILENT /UPDATE=1): reabre o CofBoost no fim.
+Filename: "{app}\CofBoost.exe"; WorkingDir: "{app}"; Flags: nowait; Check: IsUpdate
 
 [Code]
 function IsUpdate: Boolean;
@@ -93,7 +101,7 @@ end;
 
 function DataDir: String;
 begin
-  Result := ExpandConstant('{commonappdata}\Overclutch');
+  Result := ExpandConstant('{commonappdata}\CofBoost');
 end;
 
 // Antes de apagar os arquivos, oferece reverter as otimizações usando o próprio app.
@@ -106,8 +114,8 @@ begin
   if UninstallSilent then Exit;
   if MsgBox(CustomMessage('AskUndo'), mbConfirmation, MB_YESNO) <> IDYES then Exit;
 
-  // O Overclutch.exe pede o UAC sozinho e espera o PowerShell terminar antes de devolver o código.
-  if Exec(ExpandConstant('{app}\Overclutch.exe'), '--undo-all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then
+  // O CofBoost.exe pede o UAC sozinho e espera o PowerShell terminar antes de devolver o código.
+  if Exec(ExpandConstant('{app}\CofBoost.exe'), '--undo-all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then
     DelTree(DataDir, True, True, True)
   else
     MsgBox(FmtMessage(CustomMessage('UndoFailed'), [DataDir]), mbError, MB_OK);

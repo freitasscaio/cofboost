@@ -1,9 +1,9 @@
-﻿# Núcleo do Overclutch: log, backup e escrita rastreada no registro.
+﻿# Núcleo do CofBoost: log, backup e escrita rastreada no registro.
 # Toda alteração feita por um ajuste é gravada em backup.json ANTES de ser aplicada,
 # para que possa ser desfeita exatamente como estava.
 
-$script:AppName    = 'Overclutch'
-$script:AppVersion = '1.0.6'
+$script:AppName    = 'CofBoost'
+$script:AppVersion = '1.1.0'
 
 $script:Core = @{
     DataDir    = $null
@@ -21,7 +21,7 @@ function Initialize-Core {
     )
     $script:Core.DataDir    = $DataDir
     $script:Core.BackupFile = Join-Path $DataDir 'backup.json'
-    $script:Core.LogFile    = Join-Path $DataDir 'overclutch.log'
+    $script:Core.LogFile    = Join-Path $DataDir 'cofboost.log'
     $script:Core.DryRun     = [bool]$DryRun
     if (-not (Test-Path -LiteralPath $DataDir)) {
         New-Item -ItemType Directory -Path $DataDir -Force | Out-Null
@@ -30,17 +30,20 @@ function Initialize-Core {
     $script:Core.Backup = Read-Backup
 }
 
-# O app se chamava NitroFPS: traz backup, jogos e log da pasta antiga para o
-# "Desfazer" continuar valendo para o que já foi aplicado.
+# O app já se chamou Overclutch e, antes, NitroFPS: traz backup, configurações e log da
+# pasta antiga mais recente para o "Desfazer" continuar valendo para o que já foi aplicado.
 function Import-LegacyData {
     param([string]$DataDir)
-    $legacy = Join-Path $env:ProgramData 'NitroFPS'
-    if (-not (Test-Path -LiteralPath (Join-Path $legacy 'backup.json'))) { return }
-    foreach ($pair in @(@('backup.json', 'backup.json'), @('games.json', 'games.json'), @('nitrofps.log', 'overclutch.log'))) {
-        $from = Join-Path $legacy $pair[0]
-        if (Test-Path -LiteralPath $from) { Copy-Item -LiteralPath $from -Destination (Join-Path $DataDir $pair[1]) -Force }
+    foreach ($old in @(@('Overclutch', 'overclutch.log'), @('NitroFPS', 'nitrofps.log'))) {
+        $legacy = Join-Path $env:ProgramData $old[0]
+        if (-not (Test-Path -LiteralPath (Join-Path $legacy 'backup.json'))) { continue }
+        foreach ($pair in @(@('backup.json', 'backup.json'), @('settings.json', 'settings.json'), @($old[1], 'cofboost.log'))) {
+            $from = Join-Path $legacy $pair[0]
+            if (Test-Path -LiteralPath $from) { Copy-Item -LiteralPath $from -Destination (Join-Path $DataDir $pair[1]) -Force }
+        }
+        Write-Log "Dados migrados de $legacy (versão $($old[0]))."
+        return
     }
-    Write-Log "Dados migrados de $legacy (versão NitroFPS)."
 }
 
 function Test-DryRun { [bool]$script:Core.DryRun }

@@ -12,7 +12,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 . (Join-Path $root 'src\Core.ps1'); . (Join-Path $root 'src\Tweaks.ps1')
 . (Join-Path $root 'src\Update.ps1'); . (Join-Path $root 'src\UI.ps1')
 
-$data = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-ui-" + [guid]::NewGuid())
+$data = Join-Path ([IO.Path]::GetTempPath()) ("cofboost-ui-" + [guid]::NewGuid())
 Initialize-Core -DataDir $data -DryRun
 
 # Caixas de mensagem respondem "Sim" sozinhas e ficam anotadas.
@@ -91,7 +91,7 @@ Step 'Fonte e Painel' {
 }
 Step 'Verificar atualizações' { Click 'BtnCheckUpdate'; Check ([bool]($script:Messages -match 'versão')) 'resposta da verificação' }
 Step 'Faixa de atualização: Depois' {
-    Show-UpdateBanner ([pscustomobject]@{ Version = '9.9.9'; Url = "https://github.com/$($script:UpdateRepo)/releases/download/v9.9.9/Overclutch-Setup.exe"; Size = 1; Sha256 = $null })
+    Show-UpdateBanner ([pscustomobject]@{ Version = '9.9.9'; Url = "https://github.com/$($script:UpdateRepo)/releases/download/v9.9.9/CofBoost-Setup.exe"; Size = 1; Sha256 = $null })
     Check ($script:UI.UpdateBanner.Visibility -eq 'Visible') 'faixa aparece'
     Click 'BtnUpdateLater'; Check ($script:UI.UpdateBanner.Visibility -eq 'Collapsed') 'Depois esconde a faixa'
 }

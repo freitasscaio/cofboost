@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
-    Testes do Overclutch. Não alteram o sistema: os ajustes rodam em modo simulação e o
-    teste de backup/reversão usa apenas a chave de teste HKCU:\Software\Overclutch-Test (apagada no fim).
+    Testes do CofBoost. Não alteram o sistema: os ajustes rodam em modo simulação e o
+    teste de backup/reversão usa apenas a chave de teste HKCU:\Software\CofBoost-Test (apagada no fim).
     Uso: powershell -NoProfile -ExecutionPolicy Bypass -STA -File tests\Run-Tests.ps1
 #>
 $ErrorActionPreference = 'Stop'
@@ -28,7 +28,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 . (Join-Path $root 'src\Tweaks.ps1')
 . (Join-Path $root 'src\Update.ps1')
 
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ("overclutch-test-" + [guid]::NewGuid())
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ("cofboost-test-" + [guid]::NewGuid())
 
 Write-Host 'Catálogo de otimizações'
 $ids = $script:Tweaks | ForEach-Object { $_.Id }
@@ -55,7 +55,7 @@ Assert (-not (Test-Path (Join-Path $tmp 'backup.json'))) 'Nenhum backup gravado 
 Write-Host 'Backup e reversão reais (chave de teste)'
 Remove-Item -Path $tmp -Recurse -Force
 Initialize-Core -DataDir $tmp
-$key = 'HKCU:\Software\Overclutch-Test'
+$key = 'HKCU:\Software\CofBoost-Test'
 Set-RegValueRaw $key 'Existente' 5 'DWord'
 Set-RegValueRaw $key 'Texto' 'original' 'String'
 $fake = @{
@@ -81,7 +81,7 @@ Assert ((Get-RegValue $key 'Texto').Value -eq 'original') 'Valor String original
 Assert (-not (Get-RegValue $key 'Novo')) 'Valor que não existia foi removido'
 Assert (-not (Get-RegValue "$key\Sub" 'Valor')) 'Valor em subchave nova foi removido'
 Assert (@(Get-BackupEntries 'teste').Count -eq 0) 'Backup limpo após reverter'
-[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('Software\Overclutch-Test', $false)
+[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('Software\CofBoost-Test', $false)
 
 Write-Host 'Limpeza de temporários (pasta falsa)'
 $fakeTemp = Join-Path $tmp 'temp'
@@ -121,9 +121,9 @@ Assert (Test-NewerVersion '1.0.2' '1.0.1') '1.0.2 é mais nova que 1.0.1'
 Assert (Test-NewerVersion '1.10.0' '1.9.0') '1.10.0 é mais nova que 1.9.0 (compara número, não texto)'
 Assert (-not (Test-NewerVersion '1.0.1' '1.0.1')) 'Mesma versão não pede atualização'
 Assert (-not (Test-NewerVersion 'abc' '1.0.1')) 'Versão inválida não pede atualização'
-$good = [pscustomobject]@{ Version = '1.2.0'; Url = 'https://github.com/freitasscaio/overclutch/releases/download/v1.2.0/Overclutch-Setup.exe'; Size = 1; Sha256 = ('a' * 64) }
+$good = [pscustomobject]@{ Version = '1.2.0'; Url = 'https://github.com/freitasscaio/overclutch/releases/download/v1.2.0/CofBoost-Setup.exe'; Size = 1; Sha256 = ('a' * 64) }
 Assert (Test-ReleaseInfo $good) 'Release do repositório oficial é aceita'
-Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Url'; e = { 'https://evil.example/Overclutch-Setup.exe' } } -ExcludeProperty Url))) 'URL de outro site é recusada'
+Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Url'; e = { 'https://evil.example/CofBoost-Setup.exe' } } -ExcludeProperty Url))) 'URL de outro site é recusada'
 Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Version'; e = { "1.0'; rm -r C:\" } } -ExcludeProperty Version))) 'Versão com caracteres estranhos é recusada'
 Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Sha256'; e = { 'xyz' } } -ExcludeProperty Sha256))) 'SHA-256 inválido é recusado'
 $bgUpdate = Invoke-InBackground 'teste' 'param($p) Test-NewerVersion "2.0" "1.0"'

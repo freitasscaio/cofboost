@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Overclutch - otimizador de Windows para jogos.
+    CofBoost - otimizador de Windows para jogos.
 .PARAMETER DryRun
     Modo simulação: mostra no registro o que seria alterado, sem mudar nada no PC.
 .PARAMETER UndoAll
@@ -23,7 +23,7 @@ if (-not $isAdmin -and -not $DryRun) {
         $p = Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -Verb RunAs -PassThru -Wait:$UndoAll
         if ($UndoAll) { exit $p.ExitCode }
     } catch {
-        [System.Windows.MessageBox]::Show('O Overclutch precisa de permissão de administrador para otimizar o Windows.', 'Overclutch', 'OK', 'Warning') | Out-Null
+        [System.Windows.MessageBox]::Show('O CofBoost precisa de permissão de administrador para otimizar o Windows.', 'CofBoost', 'OK', 'Warning') | Out-Null
         if ($UndoAll) { exit 1 }
     }
     exit
@@ -47,5 +47,5 @@ try {
     Start-App
 } catch {
     Write-Log "Erro fatal: $($_.Exception.Message)`n$($_.ScriptStackTrace)" 'ERROR'
-    [System.Windows.MessageBox]::Show("Erro ao iniciar o Overclutch:`n$($_.Exception.Message)", 'Overclutch', 'OK', 'Error') | Out-Null
+    [System.Windows.MessageBox]::Show("Erro ao iniciar o CofBoost:`n$($_.Exception.Message)", 'CofBoost', 'OK', 'Error') | Out-Null
 }

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Overclutch: otimizador de Windows para jogos, grátis e open source</title>
-<meta name="description" content="Overclutch ajusta o Windows para jogos em um clique: menos travadas, menos input lag, limpeza do sistema e tudo reversível. Grátis e de código aberto.">
-<meta property="og:title" content="Overclutch">
+<title>CofBoost: otimizador de Windows para jogos, grátis e open source</title>
+<meta name="description" content="CofBoost ajusta o Windows para jogos em um clique: menos travadas, menos input lag, limpeza do sistema e tudo reversível. Grátis e de código aberto.">
+<meta property="og:title" content="CofBoost">
 <meta property="og:description" content="Otimizador de Windows para jogos. Grátis, open source e 100% reversível.">
 <meta property="og:image" content="assets/app-home.jpg">
 <meta name="theme-color" content="#0D1220">
@@ -30,7 +30,7 @@
     --blue: #60a5fa;
     --pink: #f472b6;
     --radius: 16px;
-    --max: 1440px;
+    --max: 1520px;
     --gutter: clamp(20px, 4vw, 64px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,6 +47,8 @@
   button { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--violet-hi); outline-offset: 3px; border-radius: 6px; }
   .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+  /* Header e footer ocupam a largura toda da tela */
+  .wrap-full { padding: 0 var(--gutter); }
   h1, h2, h3 { line-height: 1.12; font-weight: 600; text-wrap: balance; }
   h2 { font-size: clamp(28px, 3.2vw, 44px); letter-spacing: -0.015em; }
   h3 { font-size: 18px; }
@@ -261,8 +263,8 @@
 <body>
 
 <header>
-  <div class="wrap nav">
-    <a href="#" class="brand"><img src="assets/favicon.png" alt="" width="32" height="32">Overclutch</a>
+  <div class="wrap-full nav">
+    <a href="#" class="brand"><img src="assets/favicon.png" alt="" width="32" height="32">CofBoost</a>
     <nav class="nav-links" id="nav-links" aria-label="Seções">
       <a href="#recursos">Recursos</a>
       <a href="#otimizacoes">Otimizações</a>
@@ -283,7 +285,7 @@
       <div>
         <span class="pill intro"><b id="version-pill">v1</b>Grátis e de código aberto</span>
         <h1 class="intro intro-2">Seu PC no modo <span>clutch</span>, em um clique.</h1>
-        <p class="lead intro intro-3">O Overclutch ajusta o Windows para jogos: menos travadas, menos input lag e um sistema limpo. Antes de mudar qualquer coisa ele guarda o original, então tudo pode ser desfeito.</p>
+        <p class="lead intro intro-3">O CofBoost ajusta o Windows para jogos: menos travadas, menos input lag e um sistema limpo. Antes de mudar qualquer coisa ele guarda o original, então tudo pode ser desfeito.</p>
         <div class="hero-actions intro intro-4">
           <a class="btn btn-main js-download" href="#">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
@@ -294,7 +296,7 @@
         <p class="hero-note intro intro-4">Windows 10 e 11, 64 bits. Cerca de 2 MB.</p>
       </div>
       <div class="showcase intro intro-3">
-        <div class="frame" id="frame"><img id="shot" src="assets/app-home.jpg" alt="Painel do Overclutch" width="1600" height="1031"></div>
+        <div class="frame" id="frame"><img id="shot" src="assets/app-home.jpg" alt="Painel do CofBoost" width="1600" height="1031"></div>
         <div class="tabs" role="tablist" aria-label="Telas do app" id="tabs"></div>
       </div>
     </div>
@@ -334,7 +336,7 @@
     <div class="wrap split">
       <div>
         <h2>FPS médio alto não adianta se o jogo engasga</h2>
-        <p>O que você sente como travada é um quadro que demorou demais. Os ajustes do Overclutch atacam o que costuma causar esses picos: economia de energia, tarefas de fundo, gravação em segundo plano e limitação de rede.</p>
+        <p>O que você sente como travada é um quadro que demorou demais. Os ajustes do CofBoost atacam o que costuma causar esses picos: economia de energia, tarefas de fundo, gravação em segundo plano e limitação de rede.</p>
         <p style="font-size: 14px">O gráfico é uma ilustração. O ganho real depende do seu PC.</p>
       </div>
       <figure class="hud" aria-label="Gráfico ilustrativo de frametime antes e depois">
@@ -377,7 +379,7 @@
   <section id="otimizacoes" style="padding-top: 0">
     <div class="wrap">
       <div class="section-head">
-        <h2>O que o Overclutch muda no seu PC</h2>
+        <h2>O que o CofBoost muda no seu PC</h2>
         <p>Ajustes oficiais do Windows, cada um com explicação. Os recomendados entram no Otimizar agora; os opcionais você liga se quiser.</p>
       </div>
       <div class="filters" id="filters" role="group" aria-label="Filtrar por categoria"></div>
@@ -403,7 +405,7 @@
         <h2 style="font-size: clamp(24px, 2.4vw, 32px)">Restauração</h2>
         <p class="muted" style="margin-top: 10px">Duas camadas de segurança para você testar sem medo.</p>
         <ul>
-          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Backup do Overclutch</b>: desfaz só o que o app mudou</span></li>
+          <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Backup do CofBoost</b>: desfaz só o que o app mudou</span></li>
           <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Ponto de restauração</b> do Windows antes de otimizar</span></li>
           <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Lista dos pontos</b> existentes, do mais novo ao mais antigo</span></li>
           <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Modo simulação</b>: mostra o que mudaria, sem mudar</span></li>
@@ -420,7 +422,7 @@
       </div>
       <div class="compare">
         <table>
-          <thead><tr><th></th><th class="us">Overclutch</th><th>Na mão</th><th>Script da internet</th></tr></thead>
+          <thead><tr><th></th><th class="us">CofBoost</th><th>Na mão</th><th>Script da internet</th></tr></thead>
           <tbody>
             <tr><td>Aplica tudo em um clique</td><td class="us yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
             <tr><td>Explica o que cada ajuste faz</td><td class="us yes">✓</td><td class="meh">se você pesquisar</td><td class="no">—</td></tr>
@@ -462,7 +464,7 @@
         </div>
         <a class="btn btn-main js-download" href="#">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
-          Baixar o Overclutch
+          Baixar o CofBoost
         </a>
       </div>
     </div>
@@ -470,8 +472,8 @@
 </main>
 
 <footer>
-  <div class="wrap foot">
-    <span>Overclutch é um projeto open source sob licença MIT.</span>
+  <div class="wrap-full foot">
+    <span>CofBoost é um projeto open source sob licença MIT.</span>
     <nav aria-label="Links">
       <a class="js-repo" href="#">Código</a>
       <a class="js-issues" href="#">Reportar problema</a>
@@ -485,7 +487,7 @@
   // ===================== CONFIGURAÇÃO: edite aqui =====================
   const CONFIG = {
     repo: "https://github.com/freitasscaio/overclutch",
-    download: "https://github.com/freitasscaio/overclutch/releases/latest/download/Overclutch-Setup.exe",
+    download: "https://github.com/freitasscaio/overclutch/releases/latest/download/CofBoost-Setup.exe",
     // Redes sociais: link vazio = ícone escondido.
     instagram: "",
     youtube: "",
@@ -527,7 +529,7 @@
     ["Restauração", "assets/app-restore.jpg"], ["Configurações", "assets/app-settings.jpg"],
   ];
   const tabs = $("#tabs"), shot = $("#shot");
-  tabs.innerHTML = SHOTS.map(([n, src], i) => `<button class="tab" role="tab" aria-selected="${i === 0}" data-src="${src}" data-alt="Tela ${esc(n)} do Overclutch">${esc(n)}</button>`).join("");
+  tabs.innerHTML = SHOTS.map(([n, src], i) => `<button class="tab" role="tab" aria-selected="${i === 0}" data-src="${src}" data-alt="Tela ${esc(n)} do CofBoost">${esc(n)}</button>`).join("");
   tabs.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab"); if (!tab) return;
     tabs.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t === tab));
@@ -599,14 +601,14 @@
 
   // FAQ
   const FAQ = [
-    ["É seguro para o meu Windows?", "O Overclutch só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer volta tudo como era."],
+    ["É seguro para o meu Windows?", "O CofBoost só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer volta tudo como era."],
     ["Quanto de FPS eu vou ganhar?", "Depende do PC. Quem usa o Windows como veio de fábrica, notebook ou muitos programas em segundo plano costuma notar mais. Em PCs já ajustados, a diferença aparece mais como estabilidade e menos input lag. Meça no mesmo jogo, antes e depois."],
-    ["Pode dar ban em jogo com anti-cheat?", "O Overclutch não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente."],
+    ["Pode dar ban em jogo com anti-cheat?", "O CofBoost não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente."],
     ["Por que é grátis?", "O projeto está em fase de testes e é de código aberto. Usar, estudar e modificar o código é livre pela licença MIT."],
     ["Funciona em notebook?", "Sim, em qualquer PC com Windows 10 ou 11 de 64 bits. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
     ["Como recebo as atualizações?", "Ao abrir, o app consulta o GitHub. Quando sai uma versão nova, aparece um aviso com o botão Atualizar agora: ele baixa o instalador oficial, confere a integridade e reinstala sozinho."],
     ["A limpeza apaga meus arquivos?", "Não. Ela só mexe em pastas temporárias, caches do Windows e na Lixeira. A Lixeira é esvaziada só quando você clica, e arquivos em uso são mantidos."],
-    ["Como desinstalo?", "Pelo Windows, em Configurações, Aplicativos instalados, Overclutch. O desinstalador pergunta se você quer reverter as otimizações antes de remover o programa."],
+    ["Como desinstalo?", "Pelo Windows, em Configurações, Aplicativos instalados, CofBoost. O desinstalador pergunta se você quer reverter as otimizações antes de remover o programa."],
   ];
   const plus = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   $("#faq-list").innerHTML = FAQ.map(([q, a]) => `<details><summary>${esc(q)}${plus}</summary><p>${esc(a)}</p></details>`).join("");

@@ -1,4 +1,4 @@
-﻿# Interface WPF do Overclutch. Os controles com x:Name no XAML ficam em $script:UI.
+﻿# Interface WPF do CofBoost. Os controles com x:Name no XAML ficam em $script:UI.
 
 $script:Pages = @('Home', 'Tweaks', 'Clean', 'Restore', 'Settings')
 $script:TweakRows = @{}
@@ -244,7 +244,7 @@ function Update-State {
 
     $undo = @(Get-BackedUpIds).Count
     $script:UI.StatUndo.Text = $(if ($undo) { "$undo item(ns)" } else { 'Nada aplicado' })
-    $script:UI.BackupInfo.Text = $(if ($undo) { "O Overclutch guardou os valores originais de $undo item(ns). Desfazer volta todos eles." } else { 'Nenhuma otimização aplicada ainda: não há nada para desfazer.' })
+    $script:UI.BackupInfo.Text = $(if ($undo) { "O CofBoost guardou os valores originais de $undo item(ns). Desfazer volta todos eles." } else { 'Nenhuma otimização aplicada ainda: não há nada para desfazer.' })
     Set-Status 'Pronto.'
 }
 
@@ -505,12 +505,12 @@ function Invoke-UpdateNow {
 
 # Sem isso a barra de tarefas agrupa a janela com o PowerShell e mostra o ícone dele.
 # O mesmo id está nos atalhos criados pelo instalador.
-$script:AppUserModelId = 'Overclutch.App'
+$script:AppUserModelId = 'CofBoost.App'
 
 $script:TaskbarCode = @'
 using System;
 using System.Runtime.InteropServices;
-namespace Overclutch {
+namespace CofBoost {
     public static class Taskbar {
         [StructLayout(LayoutKind.Sequential)] struct PROPERTYKEY { public Guid fmtid; public uint pid; }
         // PROPVARIANT tem 24 bytes no x64; só usamos vt e o ponteiro da string.
@@ -533,7 +533,7 @@ namespace Overclutch {
             try { s.SetValue(ref k, ref v); } finally { Marshal.FreeCoTaskMem(v.p); }
         }
 
-        // Grava na janela o id do app e, se houver o Overclutch.exe, o que o Windows
+        // Grava na janela o id do app e, se houver o CofBoost.exe, o que o Windows
         // deve abrir e qual ícone usar quando a janela é fixada na barra de tarefas.
         public static void Apply(IntPtr hwnd, string appId, string exe, string name) {
             Guid iid = typeof(IPropertyStore).GUID; IPropertyStore s;
@@ -555,13 +555,13 @@ namespace Overclutch {
 function Set-TaskbarIdentity {
     try {
         Add-Type -TypeDefinition $script:TaskbarCode -ErrorAction Stop
-        [void][Overclutch.Taskbar]::SetCurrentProcessExplicitAppUserModelID($script:AppUserModelId)
-        $exe = Join-Path (Split-Path $PSScriptRoot -Parent) 'Overclutch.exe'
+        [void][CofBoost.Taskbar]::SetCurrentProcessExplicitAppUserModelID($script:AppUserModelId)
+        $exe = Join-Path (Split-Path $PSScriptRoot -Parent) 'CofBoost.exe'
         $script:LauncherExe = if (Test-Path -LiteralPath $exe) { $exe } else { $null }
         $script:Window.Add_SourceInitialized({
             $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($script:Window)).Handle
-            try { [Overclutch.Taskbar]::Apply($hwnd, $script:AppUserModelId, $script:LauncherExe, $script:AppName) } catch { }
-            try { [Overclutch.Taskbar]::RoundCorners($hwnd) } catch { }
+            try { [CofBoost.Taskbar]::Apply($hwnd, $script:AppUserModelId, $script:LauncherExe, $script:AppName) } catch { }
+            try { [CofBoost.Taskbar]::RoundCorners($hwnd) } catch { }
         })
     } catch { }
 }
@@ -622,7 +622,7 @@ function Start-App {
 
     $script:UI.VersionText.Text = "v$($script:AppVersion)"
     Set-AppFont
-    $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\overclutch.png'
+    $iconFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\cofboost.png'
     if (Test-Path -LiteralPath $iconFile) {
         # CacheOption OnLoad lê o arquivo inteiro e solta na hora; sem isso o PNG fica
         # travado enquanto o app roda e o instalador não consegue atualizar.
@@ -659,7 +659,7 @@ function Start-App {
     Update-State
     Write-Log "$($script:AppName) $($script:AppVersion) iniciado$(if (Test-DryRun) { ' em modo simulação' })."
     $script:UI.UpdateInfo.Text = "Versão instalada: $($script:AppVersion). Confere no GitHub se há uma mais nova."
-    $script:UI.AboutVersion.Text = "Overclutch $($script:AppVersion)"
+    $script:UI.AboutVersion.Text = "CofBoost $($script:AppVersion)"
     if (Get-Setting 'CheckUpdates') { Start-UpdateCheck } else { $script:UI.StatUpdate.Text = 'Verificação desligada' }
 
     [void]$script:Window.ShowDialog()
