@@ -118,6 +118,17 @@ python -m http.server 8765 --directory site
 ```
 
 Para publicar de graça, arraste a pasta `site` no **Netlify Drop** (app.netlify.com/drop) ou importe o repositório na **Vercel** com `site` como diretório raiz.
+### Privacidade e documentos legais
+
+O site não usa cookies, rastreamento nem formulários, e não carrega nada de terceiros sozinho (a fonte Poppins é servida pelo próprio site). Os documentos ficam em `site/privacidade.html`, `site/termos.html` e `site/licencas.html`.
+
+Antes de publicar o site, rode o verificador. Ele acusa campos pendentes nos documentos (nome do responsável e e-mail) e qualquer script, fonte ou imagem de terceiros:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check-site.ps1
+```
+
+Se um dia o site passar a usar Google Analytics ou outra ferramenta de medição, a Política de Privacidade precisa ser atualizada e o script só pode carregar depois do consentimento do visitante.
 ## Testes
 
 ```powershell

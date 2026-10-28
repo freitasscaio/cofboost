@@ -4,16 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CofBoost: otimizador de Windows para jogos, grátis e open source</title>
-<meta name="description" content="CofBoost ajusta o Windows para jogos em um clique: menos travadas, menos input lag, limpeza do sistema e tudo reversível. Grátis e de código aberto.">
+<meta name="description" content="CofBoost ajusta o Windows para jogos em um clique, para reduzir travadas e input lag, e limpa o sistema. As mudanças podem ser desfeitas. Grátis e de código aberto.">
 <meta property="og:title" content="CofBoost">
-<meta property="og:description" content="Otimizador de Windows para jogos. Grátis, open source e 100% reversível.">
+<meta property="og:description" content="Otimizador de Windows para jogos. Grátis, open source e com desfazer em um clique.">
 <meta property="og:image" content="assets/app-home.jpg">
 <meta name="theme-color" content="#0D1220">
 <link rel="icon" href="assets/favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/poppins-regular.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* Poppins servida pelo próprio site (licença OFL, assets/fonts/OFL.txt): nenhuma
+     requisição ao Google, então o IP do visitante não é enviado a terceiros. */
+  @font-face { font-family: Poppins; font-weight: 400; font-display: swap; src: url(assets/fonts/poppins-regular.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 500; font-display: swap; src: url(assets/fonts/poppins-medium.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 600; font-display: swap; src: url(assets/fonts/poppins-semibold.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 700; font-display: swap; src: url(assets/fonts/poppins-bold.woff2) format("woff2"); }
   :root {
     --bg: #0d1220;
     --bg-2: #0a0f1b;
@@ -24,6 +28,7 @@
     --muted: #8c97ae;
     --violet: #8b5cf6;
     --violet-hi: #a78bfa;
+    --violet-btn: #7c3aed;   /* texto branco sobre ele: 5,7:1 (WCAG AA) */
     --stable: #5bf0b0;
     --stutter: #ff6b6b;
     --amber: #f5b14c;
@@ -65,8 +70,8 @@
     border: 1px solid transparent; cursor: pointer; transition: background-color .15s, border-color .15s, transform .15s;
   }
   .btn svg { width: 18px; height: 18px; flex: none; }
-  .btn-main { background: var(--violet); color: #fff; box-shadow: 0 10px 30px -12px rgba(139, 92, 246, .8); }
-  .btn-main:hover { background: #9b74f8; transform: translateY(-1px); }
+  .btn-main { background: var(--violet-btn); color: #fff; box-shadow: 0 10px 30px -12px rgba(139, 92, 246, .8); }
+  .btn-main:hover { background: #6d28d9; transform: translateY(-1px); }
   .btn-alt { background: var(--panel); border-color: var(--line); }
   .btn-alt:hover { background: var(--panel-2); }
 
@@ -113,7 +118,7 @@
     padding: 8px 16px; border-radius: 999px; font-size: 13.5px; cursor: pointer; transition: background-color .15s, color .15s, border-color .15s;
   }
   .tab:hover { color: var(--ink); }
-  .tab[aria-selected="true"] { background: rgba(139, 92, 246, .18); border-color: rgba(139, 92, 246, .6); color: #fff; }
+  .tab[aria-pressed="true"] { background: rgba(139, 92, 246, .18); border-color: rgba(139, 92, 246, .6); color: #fff; }
 
   /* Fatos */
   .facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
@@ -151,7 +156,7 @@
   .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
   .chip { background: var(--panel); border: 1px solid var(--line); color: var(--muted); padding: 7px 15px; border-radius: 999px; font-size: 13.5px; cursor: pointer; transition: all .15s; }
   .chip:hover { color: var(--ink); }
-  .chip[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+  .chip[aria-pressed="true"] { background: var(--violet-btn); border-color: var(--violet-btn); color: #fff; }
   .tweaks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .tweak { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; animation: fade .25s ease; }
   .tweak-top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
@@ -182,7 +187,7 @@
   .compare td.us { background: rgba(139, 92, 246, .06); }
   .compare tr:last-child td { border-bottom: 0; }
   .yes { color: var(--stable); font-weight: 700; }
-  .no { color: #5d6883; }
+  .no { color: var(--muted); }
   .meh { color: var(--amber); font-size: 13.5px; }
 
   /* Instalação */
@@ -220,6 +225,10 @@
   .social a:hover { border-color: #2e3a5c; color: var(--ink); }
   .social svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip { position: absolute; left: 16px; top: -60px; z-index: 50; background: var(--violet-btn); color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+  .skip:focus { top: 12px; }
+  main:focus { outline: none; }
 
   /* Entrada do topo (só uma vez, ao abrir) */
   .intro { animation: intro .6s ease both; }
@@ -261,6 +270,7 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
 <header>
   <div class="wrap-full nav">
@@ -279,13 +289,13 @@
   </div>
 </header>
 
-<main>
+<main id="conteudo" tabindex="-1">
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <span class="pill intro"><b id="version-pill">v1</b>Grátis e de código aberto</span>
+        <span class="pill intro"><b>Grátis</b>Código aberto, sem cadastro</span>
         <h1 class="intro intro-2">Seu PC no modo <span>clutch</span>, em um clique.</h1>
-        <p class="lead intro intro-3">O CofBoost ajusta o Windows para jogos: menos travadas, menos input lag e um sistema limpo. Antes de mudar qualquer coisa ele guarda o original, então tudo pode ser desfeito.</p>
+        <p class="lead intro intro-3">O CofBoost ajusta o Windows para jogos, com o objetivo de reduzir travadas e input lag, e limpa o sistema. Antes de mudar uma configuração ele guarda o valor original, para você poder desfazer.</p>
         <div class="hero-actions intro intro-4">
           <a class="btn btn-main js-download" href="#">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
@@ -297,7 +307,7 @@
       </div>
       <div class="showcase intro intro-3">
         <div class="frame" id="frame"><img id="shot" src="assets/app-home.jpg" alt="Painel do CofBoost" width="1600" height="1031"></div>
-        <div class="tabs" role="tablist" aria-label="Telas do app" id="tabs"></div>
+        <div class="tabs" role="group" aria-label="Escolher tela do app" id="tabs"></div>
       </div>
     </div>
   </section>
@@ -321,7 +331,7 @@
         <article class="card">
           <div class="icon" style="background: rgba(91,240,176,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--stable)"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
           <h3>Desfazer de verdade</h3>
-          <p>Cada valor original fica salvo. O botão Desfazer devolve exatamente o que estava lá, e o app ainda cria um ponto de restauração.</p>
+          <p>Cada valor original fica salvo. O botão Desfazer devolve os valores que o app guardou, e ele também cria um ponto de restauração do Windows.</p>
         </article>
         <article class="card">
           <div class="icon" style="background: rgba(96,165,250,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--blue)"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></svg></div>
@@ -403,7 +413,7 @@
       <article class="card">
         <div class="icon" style="background: rgba(91,240,176,.12)"><svg viewBox="0 0 24 24" style="stroke: var(--stable)"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
         <h2 style="font-size: clamp(24px, 2.4vw, 32px)">Restauração</h2>
-        <p class="muted" style="margin-top: 10px">Duas camadas de segurança para você testar sem medo.</p>
+        <p class="muted" style="margin-top: 10px">Duas camadas de segurança para você testar com tranquilidade.</p>
         <ul>
           <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Backup do CofBoost</b>: desfaz só o que o app mudou</span></li>
           <li><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg><span><b>Ponto de restauração</b> do Windows antes de otimizar</span></li>
@@ -422,14 +432,14 @@
       </div>
       <div class="compare">
         <table>
-          <thead><tr><th></th><th class="us">CofBoost</th><th>Na mão</th><th>Script da internet</th></tr></thead>
+          <caption class="sr">Comparação entre o CofBoost, fazer na mão e scripts da internet</caption><thead><tr><th scope="col"><span class="sr">Recurso</span></th><th scope="col" class="us">CofBoost</th><th scope="col">Na mão</th><th scope="col">Script da internet</th></tr></thead>
           <tbody>
-            <tr><td>Aplica tudo em um clique</td><td class="us yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
-            <tr><td>Explica o que cada ajuste faz</td><td class="us yes">✓</td><td class="meh">se você pesquisar</td><td class="no">—</td></tr>
-            <tr><td>Salva os valores originais</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
-            <tr><td>Desfaz em um clique</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
-            <tr><td>Limpeza do sistema junto</td><td class="us yes">✓</td><td class="meh">vários lugares</td><td class="meh">às vezes</td></tr>
-            <tr><td>Avisa quando sai versão nova</td><td class="us yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+            <tr><td>Aplica tudo em um clique</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td><td class="yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td></tr>
+            <tr><td>Explica o que cada ajuste faz</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="meh">se você pesquisar</td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td></tr>
+            <tr><td>Salva os valores originais</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td></tr>
+            <tr><td>Desfaz em um clique</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td></tr>
+            <tr><td>Limpeza do sistema junto</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="meh">vários lugares</td><td class="meh">às vezes</td></tr>
+            <tr><td>Avisa quando sai versão nova</td><td class="us yes"><span aria-hidden="true">✓</span><span class="sr">Sim</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr">Não</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -460,7 +470,7 @@
       <div class="final">
         <div>
           <h2>Pronto para testar no seu PC?</h2>
-          <p>Grátis, sem cadastro e sem pegadinha. Se não gostar, um clique desfaz tudo.</p>
+          <p>Grátis e sem cadastro. Se não gostar, um clique desfaz o que o CofBoost mudou.</p>
         </div>
         <a class="btn btn-main js-download" href="#">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
@@ -473,11 +483,13 @@
 
 <footer>
   <div class="wrap-full foot">
-    <span>CofBoost é um projeto open source sob licença MIT.</span>
+    <div><span>CofBoost é um projeto open source sob licença MIT.</span><br><small class="muted">Windows, Xbox, Game Pass e Copilot são marcas da Microsoft. O CofBoost não é afiliado nem endossado pela Microsoft ou por qualquer jogo.</small></div>
     <nav aria-label="Links">
       <a class="js-repo" href="#">Código</a>
       <a class="js-issues" href="#">Reportar problema</a>
-      <a class="js-license" href="#">Licença</a>
+      <a href="privacidade.html">Privacidade</a>
+      <a href="termos.html">Termos de Uso</a>
+      <a href="licencas.html">Licenças</a>
     </nav>
     <div class="social" id="social"></div>
   </div>
@@ -504,10 +516,6 @@
   setHref(".js-issues", CONFIG.repo + "/issues");
   setHref(".js-license", CONFIG.repo + "/blob/main/LICENSE");
 
-  // Versão mais recente no selo do topo (sem internet, fica "v1").
-  fetch("https://api.github.com/repos/freitasscaio/overclutch/releases/latest")
-    .then((r) => (r.ok ? r.json() : null)).then((r) => { if (r && r.tag_name) $("#version-pill").textContent = r.tag_name; }).catch(() => {});
-
   // Redes sociais no rodapé
   const SOCIAL = {
     instagram: ["Instagram", '<path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z"/><circle cx="12" cy="12" r="4"/><path d="M17.4 6.6h.1"/>'],
@@ -529,10 +537,10 @@
     ["Restauração", "assets/app-restore.jpg"], ["Configurações", "assets/app-settings.jpg"],
   ];
   const tabs = $("#tabs"), shot = $("#shot");
-  tabs.innerHTML = SHOTS.map(([n, src], i) => `<button class="tab" role="tab" aria-selected="${i === 0}" data-src="${src}" data-alt="Tela ${esc(n)} do CofBoost">${esc(n)}</button>`).join("");
+  tabs.innerHTML = SHOTS.map(([n, src], i) => `<button class="tab" type="button" aria-pressed="${i === 0}" data-src="${src}" data-alt="Tela ${esc(n)} do CofBoost">${esc(n)}</button>`).join("");
   tabs.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab"); if (!tab) return;
-    tabs.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t === tab));
+    tabs.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-pressed", t === tab));
     if (shot.getAttribute("src") === tab.dataset.src) return;
     shot.classList.add("swap");
     setTimeout(() => {
@@ -601,9 +609,9 @@
 
   // FAQ
   const FAQ = [
-    ["É seguro para o meu Windows?", "O CofBoost só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer volta tudo como era."],
+    ["É seguro para o meu Windows?", "O CofBoost só muda configurações oficiais do Windows: registro, plano de energia e serviços. Ele salva cada valor original antes de mudar e cria um ponto de restauração. O botão Desfazer volta as configurações que o CofBoost alterou. Mesmo assim, mudanças no sistema sempre têm algum risco: leia os Termos de Uso e, na dúvida, use o modo simulação primeiro."],
     ["Quanto de FPS eu vou ganhar?", "Depende do PC. Quem usa o Windows como veio de fábrica, notebook ou muitos programas em segundo plano costuma notar mais. Em PCs já ajustados, a diferença aparece mais como estabilidade e menos input lag. Meça no mesmo jogo, antes e depois."],
-    ["Pode dar ban em jogo com anti-cheat?", "O CofBoost não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente."],
+    ["Pode dar ban em jogo com anti-cheat?", "O CofBoost não abre, modifica nem injeta nada nos jogos. Ele mexe só em configurações do Windows, as mesmas que você poderia mudar manualmente. Como cada jogo tem as próprias regras, não podemos garantir como um anti-cheat vai reagir: na dúvida, consulte o suporte do jogo."],
     ["Por que é grátis?", "O projeto está em fase de testes e é de código aberto. Usar, estudar e modificar o código é livre pela licença MIT."],
     ["Funciona em notebook?", "Sim, em qualquer PC com Windows 10 ou 11 de 64 bits. O plano Desempenho Máximo gasta mais bateria, então jogue na tomada."],
     ["Como recebo as atualizações?", "Ao abrir, o app consulta o GitHub. Quando sai uma versão nova, aparece um aviso com o botão Atualizar agora: ele baixa o instalador oficial, confere a integridade e reinstala sozinho."],

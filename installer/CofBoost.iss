@@ -61,6 +61,7 @@ Source: "..\CofBoost.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Iniciar.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Simular.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs
 Source: "..\assets\cofboost.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "..\assets\cofboost.png"; DestDir: "{app}\assets"; Flags: ignoreversion

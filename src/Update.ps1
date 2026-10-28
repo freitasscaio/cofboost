@@ -34,7 +34,9 @@ function Get-LatestRelease {
         Sha256  = $sha
         Page    = "$($rel.html_url)"
     }
-    if (-not (Test-ReleaseInfo $info)) { throw "Resposta inesperada do GitHub para a versão '$($info.Version)'." }
+    # Release sem o instalador esperado (ainda sendo publicada, ou de quando o app tinha
+    # outro nome): não é erro. Quem chama confere Test-ReleaseInfo antes de oferecer.
+    $info | Add-Member -NotePropertyName Installable -NotePropertyValue ([bool](Test-ReleaseInfo $info))
     $info
 }
 

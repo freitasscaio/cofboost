@@ -457,9 +457,9 @@
                       <TextBlock Style="{StaticResource H2}" FontSize="21" Text="Otimize seu PC em um clique"/>
                       <TextBlock x:Name="ScoreDetail" Text="0 de 20 ajustes ativos" Foreground="#C4B5FD" FontSize="13" Margin="0,6,0,0"/>
                       <TextBlock Foreground="{StaticResource Muted}" FontSize="12.5" TextWrapping="Wrap" Margin="0,8,0,0"
-                                 Text="Cria um ponto de restauração, salva os valores originais e aplica os ajustes recomendados. Dá para desfazer tudo depois."/>
+                                 Text="Cria um ponto de restauração, salva os valores originais e aplica os ajustes recomendados. O que o CofBoost mudar pode ser desfeito."/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Width="230">
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Width="260">
                       <Button x:Name="BtnBoost" Style="{StaticResource PrimaryButton}" Height="50" FontSize="15">
                         <StackPanel Orientation="Horizontal">
                           <Viewbox Width="18" Height="18"><Grid Width="24" Height="24"><Path Style="{StaticResource Icon}" Stroke="White" StrokeThickness="2.2" Data="M13 2 L3 14 H12 L11 22 L21 10 H12 Z"/></Grid></Viewbox>

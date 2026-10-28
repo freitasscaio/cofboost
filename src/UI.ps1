@@ -389,7 +389,9 @@ function Register-Handlers {
     $script:UI.BtnCheckUpdate.Add_Click({
         Invoke-Busy 'Verificando atualizações...' {
             $rel = Invoke-InBackground 'Verificando atualizações' 'param($p) Get-LatestRelease'
-            if (Test-NewerVersion $rel.Version $script:AppVersion) {
+            if ((Test-NewerVersion $rel.Version $script:AppVersion) -and -not $rel.Installable) {
+                Show-Message "A versão $($rel.Version) ainda está sendo publicada. Tente de novo em alguns minutos." | Out-Null
+            } elseif (Test-NewerVersion $rel.Version $script:AppVersion) {
                 Show-UpdateBanner $rel
                 $answer = Show-Message "A versão $($rel.Version) está disponível (você tem a $($script:AppVersion)).`n`nAtualizar agora?" 'Question' 'YesNo'
                 if ($answer -eq 'Yes') { $script:UpdateAfterBusy = $true }
@@ -483,7 +485,7 @@ function Start-UpdateCheck {
     Start-InBackground 'param($p) Get-LatestRelease' {
         param($rel, $err)
         if ($err) { $script:UI.StatUpdate.Text = 'Sem conexão'; Write-Log "Verificação de atualização falhou: $err" 'WARN'; return }
-        if ($rel -and (Test-NewerVersion $rel.Version $script:AppVersion)) { Show-UpdateBanner $rel }
+        if ($rel -and $rel.Installable -and (Test-NewerVersion $rel.Version $script:AppVersion)) { Show-UpdateBanner $rel }
         else { $script:UI.StatUpdate.Text = "Em dia (v$($script:AppVersion))" }
     }
 }
