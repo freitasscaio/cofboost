@@ -2,7 +2,7 @@
 # oficial, confere o SHA-256 publicado pelo GitHub e roda a instalação.
 # Usa só Write-Log do Core, para poder rodar também em segundo plano (Invoke-InBackground).
 
-$script:UpdateRepo  = 'freitasscaio/overclutch'
+$script:UpdateRepo  = 'freitasscaio/cofboost'
 $script:UpdateAsset = 'CofBoost-Setup.exe'
 
 function Enable-Tls12 {

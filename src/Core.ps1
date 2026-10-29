@@ -367,7 +367,7 @@ $script:Links = [ordered]@{
     Instagram = ''
     YouTube   = ''
     Discord   = ''
-    GitHub    = 'https://github.com/freitasscaio/overclutch'
+    GitHub    = 'https://github.com/freitasscaio/cofboost'
 }
 function Clear-Dns {
     if (Test-DryRun) { Write-Log '[SIMULAÇÃO] Limpar cache DNS'; return }

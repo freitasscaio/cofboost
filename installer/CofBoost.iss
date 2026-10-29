@@ -14,8 +14,8 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher=CofBoost contributors
-AppPublisherURL=https://github.com/freitasscaio/overclutch
-AppSupportURL=https://github.com/freitasscaio/overclutch/issues
+AppPublisherURL=https://github.com/freitasscaio/cofboost
+AppSupportURL=https://github.com/freitasscaio/cofboost/issues
 ; Instala só para o usuário atual: não pede administrador para instalar.
 ; O próprio app pede permissão (UAC) quando vai otimizar.
 PrivilegesRequired=lowest

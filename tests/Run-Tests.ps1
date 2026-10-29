@@ -121,7 +121,7 @@ Assert (Test-NewerVersion '1.0.2' '1.0.1') '1.0.2 é mais nova que 1.0.1'
 Assert (Test-NewerVersion '1.10.0' '1.9.0') '1.10.0 é mais nova que 1.9.0 (compara número, não texto)'
 Assert (-not (Test-NewerVersion '1.0.1' '1.0.1')) 'Mesma versão não pede atualização'
 Assert (-not (Test-NewerVersion 'abc' '1.0.1')) 'Versão inválida não pede atualização'
-$good = [pscustomobject]@{ Version = '1.2.0'; Url = 'https://github.com/freitasscaio/overclutch/releases/download/v1.2.0/CofBoost-Setup.exe'; Size = 1; Sha256 = ('a' * 64) }
+$good = [pscustomobject]@{ Version = '1.2.0'; Url = 'https://github.com/freitasscaio/cofboost/releases/download/v1.2.0/CofBoost-Setup.exe'; Size = 1; Sha256 = ('a' * 64) }
 Assert (Test-ReleaseInfo $good) 'Release do repositório oficial é aceita'
 Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Url'; e = { 'https://evil.example/CofBoost-Setup.exe' } } -ExcludeProperty Url))) 'URL de outro site é recusada'
 Assert (-not (Test-ReleaseInfo ($good | Select-Object *, @{ n = 'Version'; e = { "1.0'; rm -r C:\" } } -ExcludeProperty Version))) 'Versão com caracteres estranhos é recusada'

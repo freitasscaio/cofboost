@@ -17,7 +17,7 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 
 ## Instalação
 
-Baixe o **CofBoost-Setup.exe** na página de [Releases](https://github.com/freitasscaio/overclutch/releases/latest) e siga o assistente.
+Baixe o **CofBoost-Setup.exe** na página de [Releases](https://github.com/freitasscaio/cofboost/releases/latest) e siga o assistente.
 
 - Não pede senha de administrador para instalar. O app pede permissão (UAC) só quando vai otimizar.
 - Cria atalhos no Menu Iniciar (normal e modo simulação) e, se você quiser, na Área de Trabalho.
@@ -27,7 +27,7 @@ Baixe o **CofBoost-Setup.exe** na página de [Releases](https://github.com/freit
 ### Para desenvolvedores
 
 ```powershell
-git clone https://github.com/freitasscaio/overclutch.git
+git clone https://github.com/freitasscaio/cofboost.git
 cd cofboost
 .\Iniciar.bat                                              # roda direto da pasta
 powershell -ExecutionPolicy Bypass -File install.ps1       # instalação rápida, sem assistente
