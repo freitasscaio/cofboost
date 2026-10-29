@@ -29,3 +29,5 @@ th { color: var(--muted); font-weight: 600; font-size: 14px; }
 pre { white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 13px; color: #c9d2e6; }
 mark.todo { background: #5b2a00; color: #ffd8a8; padding: 0 4px; border-radius: 4px; }
 @media (max-width: 640px) { table, thead, tbody, tr, th, td { display: block; } thead { display: none; } td { border: 0; padding: 4px 0; } tr { border-bottom: 1px solid var(--line); padding: 10px 0; } }
+
+.linklike { background: none; border: 0; color: var(--violet-hi); font: inherit; padding: 0; text-decoration: underline; cursor: pointer; }

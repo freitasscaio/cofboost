@@ -20,8 +20,8 @@
   <div class="summary">
     <strong>Resumo</strong>
     <ul>
-      <li>O site não usa cookies, não tem ferramentas de análise (como Google Analytics) nem rastreadores e não tem formulários.</li>
-      <li>O site não carrega nada de terceiros sozinho: fontes e imagens são servidas pelo próprio site.</li>
+      <li>O site não tem formulários. Ele só usa cookies e o Google Analytics se você aceitar no aviso de cookies; se recusar, nada disso é ativado.</li>
+      <li>Fontes e imagens são servidas pelo próprio site. O Google Analytics só é carregado depois do seu aceite.</li>
       <li>A empresa de hospedagem registra dados técnicos de acesso (como o endereço IP) para entregar e proteger o site.</li>
       <li>O aplicativo CofBoost não envia dados pessoais para nós. Ele só consulta o GitHub para saber se há versão nova, e isso pode ser desligado.</li>
     </ul>
@@ -32,10 +32,23 @@
   <p>Canal de contato para assuntos de privacidade: <mark class="todo">[E-MAIL DO PROJETO]</mark>. Como agente de tratamento de pequeno porte, o responsável pode não indicar um encarregado (Resolução CD/ANPD nº 2/2022); este canal cumpre a função de comunicação com os titulares e com a Autoridade Nacional de Proteção de Dados (ANPD).</p>
 
   <h2>2. O que acontece quando você visita o site</h2>
-  <h3>2.1 Cookies e armazenamento no navegador</h3>
-  <p>O site não grava cookies nem usa armazenamento local do navegador (como localStorage). Por isso não há banner de cookies: não existe nada para você aceitar ou recusar.</p>
-  <h3>2.2 Ferramentas de análise e publicidade</h3>
-  <p>O site não usa Google Analytics, pixels de redes sociais, mapas de calor nem qualquer outra ferramenta de medição, rastreamento ou publicidade. Se isso mudar no futuro, esta política será atualizada antes, e ferramentas que dependam de consentimento só serão carregadas depois que você concordar.</p>
+  <h3>2.1 Cookies e o aviso de consentimento</h3>
+  <p>Sem o seu aceite, o site não grava cookies. Ele guarda apenas a sua resposta ao aviso de cookies (aceitou ou recusou, com a data) no armazenamento local do seu navegador, para não perguntar de novo a cada visita. Esse registro fica só no seu navegador e não é enviado a ninguém.</p>
+  <h3>2.2 Google Analytics (só com o seu consentimento)</h3>
+  <p id="analytics">O site usa o <strong>Google Analytics 4</strong>, do Google, para contar visitas e entender quais páginas são mais úteis. Ele só é ativado depois que você clica em <strong>Aceitar</strong> no aviso de cookies. Se você clicar em <strong>Recusar</strong>, ou não responder, o script do Google não é carregado e nenhum cookie de medição é gravado.</p>
+  <table>
+    <thead><tr><th scope="col">Item</th><th scope="col">Como funciona</th></tr></thead>
+    <tbody>
+      <tr><td>O que é coletado</td><td>Páginas visitadas, cliques em links (como o download), origem da visita (busca, rede social, link direto), tipo de aparelho e navegador, idioma e região aproximada (cidade ou país). Segundo o Google, o Google Analytics 4 não registra nem armazena endereços IP.</td></tr>
+      <tr><td>Cookies gravados</td><td><code>_ga</code> e <code>_ga_&lt;ID&gt;</code>, que identificam o navegador de forma pseudônima para contar visitas recorrentes. Duram até 2 anos, a menos que você retire o consentimento ou limpe os cookies.</td></tr>
+      <tr><td>O que não fazemos</td><td>Não usamos o Analytics para publicidade: Google Signals e personalização de anúncios ficam desligados, e não cruzamos esses dados com nenhuma outra informação.</td></tr>
+      <tr><td>Base legal</td><td>Consentimento (art. 7º, I, da LGPD).</td></tr>
+      <tr><td>Quem trata</td><td>Google LLC, como operador, conforme a política de privacidade do Google. Os dados são processados em servidores fora do Brasil, inclusive nos EUA, em transferência internacional baseada no seu consentimento específico (art. 33, VIII, da LGPD).</td></tr>
+      <tr><td>Por quanto tempo</td><td>Os dados de eventos ficam no Google Analytics por até 14 meses e depois são apagados automaticamente. Os relatórios mostram apenas números agregados.</td></tr>
+      <tr><td>Como mudar de ideia</td><td>Clique em <strong>Preferências de cookies</strong>, no rodapé de qualquer página, e escolha Recusar. O site apaga os cookies do Google Analytics e para de medir a partir daí. Você também pode usar o complemento oficial de desativação do Google Analytics no seu navegador.</td></tr>
+    </tbody>
+  </table>
+  <p>O site não usa pixels de redes sociais, mapas de calor, publicidade nem outras ferramentas de rastreamento.</p>
   <h3>2.3 Registros técnicos da hospedagem</h3>
   <p>Como qualquer site, ao ser acessado ele recebe informações técnicas enviadas pelo seu navegador. A empresa que hospeda o site, atualmente a Vercel Inc., registra automaticamente dados como:</p>
   <table>
@@ -58,10 +71,10 @@
   </ul>
 
   <h2>4. Compartilhamento</h2>
-  <p>O responsável pelo projeto não vende, aluga nem compartilha dados pessoais. Os únicos terceiros envolvidos são os citados acima (hospedagem do site e GitHub), cada um como prestador do próprio serviço.</p>
+  <p>O responsável pelo projeto não vende, aluga nem compartilha dados pessoais. Os únicos terceiros envolvidos são os citados acima: a hospedagem do site, o GitHub e, só se você aceitar, o Google Analytics, cada um como prestador do próprio serviço.</p>
 
   <h2>5. Por quanto tempo</h2>
-  <p>O responsável pelo projeto não mantém bancos de dados com informações de visitantes ou usuários. Os registros técnicos ficam com a hospedagem pelo prazo definido por ela. Os dados do aplicativo ficam no seu computador até você apagá-los ou desinstalar o app.</p>
+  <p>O responsável pelo projeto não mantém bancos de dados com informações de visitantes ou usuários. Os registros técnicos ficam com a hospedagem pelo prazo definido por ela, e os dados do Google Analytics pelo prazo indicado na seção 2.2. Os dados do aplicativo ficam no seu computador até você apagá-los ou desinstalar o app.</p>
 
   <h2>6. Seus direitos</h2>
   <p>A LGPD (art. 18) garante a você, entre outros, os direitos de confirmar se há tratamento dos seus dados, acessá-los, corrigi-los, pedir anonimização, bloqueio ou eliminação, saber com quem foram compartilhados e se opor a um tratamento. Para exercer qualquer um deles, escreva para <mark class="todo">[E-MAIL DO PROJETO]</mark>. Como o projeto praticamente não guarda dados pessoais, a resposta pode ser de que não há dados seus conosco; pedidos sobre os registros da hospedagem ou do GitHub também podem ser feitos diretamente a essas empresas.</p>
@@ -71,12 +84,13 @@
   <p>O site e o aplicativo não pedem nem coletam dados de crianças ou adolescentes. O uso do aplicativo exige permissão de administrador do computador; menores de idade devem usá-lo com o acompanhamento dos responsáveis.</p>
 
   <h2>8. Segurança</h2>
-  <p>O site é servido por conexão segura (HTTPS) e não carrega scripts de terceiros. O aplicativo confere a integridade de cada atualização (SHA-256) antes de instalar e tem o código aberto para auditoria.</p>
+  <p>O site é servido por conexão segura (HTTPS) e só carrega um script de terceiros, o do Google Analytics, depois do seu consentimento. O aplicativo confere a integridade de cada atualização (SHA-256) antes de instalar e tem o código aberto para auditoria.</p>
 
   <h2>9. Mudanças nesta política</h2>
   <p>Esta política pode ser atualizada, por exemplo se o site passar a usar alguma ferramenta nova. A data no topo indica a versão em vigor, e mudanças relevantes serão destacadas no site.</p>
 </main>
 
-<footer><nav aria-label="Documentos"><a href="privacidade.html" aria-current="page">Privacidade</a><a href="termos.html">Termos de Uso</a><a href="licencas.html">Licenças</a><a href="index.html">Início</a></nav>CofBoost é um projeto open source sob licença MIT.</footer>
+<footer><nav aria-label="Documentos"><a href="privacidade.html" aria-current="page">Privacidade</a><a href="termos.html">Termos de Uso</a><a href="licencas.html">Licenças</a><a href="index.html">Início</a><button type="button" class="js-cookie-prefs linklike" hidden>Preferências de cookies</button></nav>CofBoost é um projeto open source sob licença MIT.</footer>
+<script src="assets/consent.js" data-ga-id="" defer></script>
 </body>
 </html>
