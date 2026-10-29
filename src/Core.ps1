@@ -3,7 +3,7 @@
 # para que possa ser desfeita exatamente como estava.
 
 $script:AppName    = 'CofBoost'
-$script:AppVersion = '1.1.0'
+$script:AppVersion = '1.1.1'
 
 $script:Core = @{
     DataDir    = $null
