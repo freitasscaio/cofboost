@@ -153,7 +153,7 @@ $window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader
 Assert ($null -ne $window) 'XAML carrega'
 foreach ($n in @('BtnBoost', 'BtnUndoAll', 'UpdateBanner', 'BtnUpdateNow', 'BtnUpdateLater', 'BtnCheckUpdate', 'UpdateInfo', 'TweakList', 'StatusText', 'ContentHost', 'BusyBar',
         'BtnCleanTemp', 'BtnCleanThumbs', 'BtnCleanUpdate', 'BtnCleanBin', 'BtnFlushDns', 'BtnCleanAll', 'BtnRestorePoint', 'BtnOpenRestore', 'BtnUndoAllRestore', 'RestoreList', 'BackupInfo',
-        'ToggleCheckUpdates', 'ToggleRestoreBefore', 'BtnOpenData', 'BtnOpenLog', 'AboutVersion', 'StatRestore', 'LinkInstagram', 'LinkYouTube', 'LinkDiscord', 'LinkGitHub') +
+        'ToggleCheckUpdates', 'ToggleRestoreBefore', 'BtnOpenData', 'BtnOpenLog', 'AboutVersion', 'StatRestore', 'LinkInstagram', 'LinkYouTube', 'LinkDiscord', 'LinkGitHub', 'TweakSearch', 'TweakSearchHint', 'CategoryBar') +
         ('Home', 'Tweaks', 'Clean', 'Restore', 'Settings' | ForEach-Object { "Page$_"; "Nav$_" })) {
     Assert ($null -ne $window.FindName($n)) "Controle $n existe"
 }

@@ -32,6 +32,58 @@ function Get-ActiveTcpInterfaces {
     }
 }
 
+# ---------------------------------------------------------------- opções do plano de energia
+# Valores de um item do plano ativo (ex.: suspensão seletiva de USB). O powercfg mostra
+# o índice atual na tomada (AC) e na bateria (DC) como os dois últimos números 0x... da saída.
+$script:PowerSettings = @{
+    UsbSuspend = @{ Sub = '2a737441-1930-4402-8d77-b2bebba308a3'; Setting = '48e6b7a6-50f5-4782-a5d4-53bb8f07e226' }
+    PcieAspm   = @{ Sub = '501a4d13-42af-4429-9fd1-a8218c268e20'; Setting = 'ee12f906-d277-404b-b6da-e5fa1a576df5' }
+}
+
+function Get-PowerSettingValue {
+    param([string]$Scheme, [string]$Sub, [string]$Setting)
+    $out = powercfg /query $Scheme $Sub $Setting 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $out) { return $null }
+    $hex = @([regex]::Matches(($out -join "`n"), '0x([0-9a-fA-F]{8})') | ForEach-Object { [Convert]::ToInt32($_.Groups[1].Value, 16) })
+    if ($hex.Count -lt 2) { return $null }
+    [pscustomobject]@{ AC = $hex[-2]; DC = $hex[-1] }
+}
+
+function Set-PowerSettingValue {
+    param([string]$Scheme, [string]$Sub, [string]$Setting, [int]$AC, [int]$DC)
+    powercfg /setacvalueindex $Scheme $Sub $Setting $AC | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "powercfg não aceitou o valor $AC para $Setting" }
+    powercfg /setdcvalueindex $Scheme $Sub $Setting $DC | Out-Null
+    # Reativar o plano faz o Windows ler os valores novos na hora.
+    if ((Get-ActiveSchemeGuid) -eq $Scheme) { powercfg /setactive $Scheme | Out-Null }
+}
+
+# Grava o valor original (do plano ativo) no backup antes de mudar, como o Set-TrackedRegistry.
+function Set-TrackedPowerSetting {
+    param([string]$TweakId, [string]$Key, [int]$Value)
+    $ps = $script:PowerSettings[$Key]
+    $scheme = Get-ActiveSchemeGuid
+    if (-not $scheme) { throw 'Não foi possível ler o plano de energia atual.' }
+    $cur = Get-PowerSettingValue $scheme $ps.Sub $ps.Setting
+    if (-not $cur) { throw 'Esta opção de energia não existe neste PC.' }
+    if (Test-DryRun) { Write-Log "[SIMULAÇÃO] Plano $scheme : $Key = $Value (atual: $($cur.AC))"; return }
+    $already = Get-BackupEntries $TweakId | Where-Object { $_.Kind -eq 'PowerSetting' -and $_.Scheme -eq $scheme -and $_.Setting -eq $ps.Setting }
+    if (-not $already) {
+        Add-BackupEntry $TweakId ([pscustomobject]@{ Kind = 'PowerSetting'; Scheme = $scheme; Sub = $ps.Sub; Setting = $ps.Setting; AC = $cur.AC; DC = $cur.DC })
+    }
+    Set-PowerSettingValue $scheme $ps.Sub $ps.Setting $Value $Value
+    Write-Log "Plano $scheme : $Key = $Value"
+}
+
+function Test-PowerSetting {
+    param([string]$Key, [int]$Value)
+    $ps = $script:PowerSettings[$Key]
+    $scheme = Get-ActiveSchemeGuid
+    if (-not $scheme) { return $false }
+    $cur = Get-PowerSettingValue $scheme $ps.Sub $ps.Setting
+    [bool]($cur -and $cur.AC -eq $Value)
+}
+
 $script:Tweaks = @(
     # ------------------------------------------------------------ Sistema
     @{
@@ -110,6 +162,12 @@ $script:Tweaks = @(
         Registry = @( (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' 0) )
     }
     @{
+        Id = 'fast-startup'; Category = 'Sistema'; Default = $false; Risk = 'Baixo'; Reboot = $true
+        Name = 'Desativar Inicialização Rápida'
+        Description = 'Faz o "Desligar" zerar o Windows de verdade, recarregando drivers limpos a cada boot. Resolve travadinhas que só somem reiniciando. O PC liga alguns segundos mais devagar.'
+        Registry = @( (RegSet 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power' 'HiberbootEnabled' 0) )
+    }
+    @{
         Id = 'visual-effects'; Category = 'Sistema'; Default = $false; Risk = 'Baixo'
         Name = 'Efeitos visuais para desempenho'
         Description = 'Desliga transparência e animações do Windows. Ajuda PCs fracos, mas o visual fica mais simples. As letras continuam suaves (ClearType).'
@@ -182,6 +240,30 @@ $script:Tweaks = @(
             (RegSet 'HKCU:\Control Panel\Keyboard' 'KeyboardSpeed' '31' 'String')
         )
     }
+    @{
+        Id = 'usb-suspend'; Category = 'Latência e Input'; Default = $true; Risk = 'Baixo'
+        Name = 'Desativar suspensão seletiva de USB'
+        Description = 'O Windows para de "adormecer" as portas USB para economizar energia. Mouse, teclado e headset ficam sempre acordados, sem engasgos ao voltar do repouso.'
+        Apply = { param($t) Set-TrackedPowerSetting $t.Id 'UsbSuspend' 0 }
+        Test  = { Test-PowerSetting 'UsbSuspend' 0 }
+    }
+    @{
+        Id = 'pcie-aspm'; Category = 'Latência e Input'; Default = $true; Risk = 'Baixo'
+        Name = 'Desativar economia de energia do PCI Express'
+        Description = 'Desliga o "Gerenciamento de Energia do Estado de Link": a placa de vídeo e o SSD NVMe não entram em modo econômico entre um frame e outro. Em notebook, gasta um pouco mais de bateria.'
+        Apply = { param($t) Set-TrackedPowerSetting $t.Id 'PcieAspm' 0 }
+        Test  = { Test-PowerSetting 'PcieAspm' 0 }
+    }
+    @{
+        Id = 'accessibility-hotkeys'; Category = 'Latência e Input'; Default = $true; Risk = 'Baixo'
+        Name = 'Desativar atalhos de Teclas de Aderência e Filtro'
+        Description = 'Apertar Shift 5 vezes ou segurar o Shift não abre mais a janela de acessibilidade por cima do jogo. Os recursos continuam disponíveis em Configurações.'
+        Registry = @(
+            (RegSet 'HKCU:\Control Panel\Accessibility\StickyKeys' 'Flags' '506' 'String')
+            (RegSet 'HKCU:\Control Panel\Accessibility\Keyboard Response' 'Flags' '122' 'String')
+            (RegSet 'HKCU:\Control Panel\Accessibility\ToggleKeys' 'Flags' '58' 'String')
+        )
+    }
 
     # ------------------------------------------------------------ Rede
     @{
@@ -247,6 +329,39 @@ $script:Tweaks = @(
         Registry = @(
             (RegSet 'HKCU:\Software\Microsoft\GameBar' 'UseNexusForGameBarEnabled' 0)
             (RegSet 'HKCU:\Software\Microsoft\GameBar' 'ShowStartupPanel' 0)
+        )
+    }
+    @{
+        Id = 'windows-tips'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'
+        Name = 'Desativar dicas e sugestões do Windows'
+        Description = 'Tira as dicas, "sugestões" de apps e telas de boas-vindas que o Windows mostra sozinho, inclusive notificações no meio do jogo.'
+        Registry = @(
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-338389Enabled' 0)
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-310093Enabled' 0)
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SystemPaneSuggestionsEnabled' 0)
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SoftLandingEnabled' 0)
+            (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement' 'ScoobeSystemSettingEnabled' 0)
+        )
+    }
+    @{
+        Id = 'advertising-id'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'
+        Name = 'Desativar ID de publicidade'
+        Description = 'Impede que apps usem um identificador seu para mostrar anúncios personalizados.'
+        Registry = @( (RegSet 'HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' 0) )
+    }
+    @{
+        Id = 'delivery-optimization'; Category = 'Recursos do Windows'; Default = $true; Risk = 'Baixo'
+        Name = 'Não enviar atualizações para outros PCs'
+        Description = 'Desliga a Otimização de Entrega em modo P2P: o Windows para de usar sua internet para mandar atualizações a outros computadores. As suas atualizações continuam chegando normalmente.'
+        Registry = @( (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode' 0) )
+    }
+    @{
+        Id = 'edge-background'; Category = 'Recursos do Windows'; Default = $false; Risk = 'Baixo'
+        Name = 'Impedir o Edge de rodar em segundo plano'
+        Description = 'Desliga o "Aumento de inicialização" e a execução em segundo plano do Microsoft Edge depois de fechado. O Edge pode mostrar "gerenciado pela sua organização" por usar uma política.'
+        Registry = @(
+            (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' 'StartupBoostEnabled' 0)
+            (RegSet 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' 'BackgroundModeEnabled' 0)
         )
     }
     @{

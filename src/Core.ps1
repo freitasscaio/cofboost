@@ -208,6 +208,14 @@ function Restore-Backup {
                 if ($LASTEXITCODE -ne 0) { throw "powercfg /setactive $($e.Previous) falhou" }
                 if ($e.Created) { powercfg /delete $e.Created | Out-Null }
                 Write-Log "Plano de energia anterior restaurado ($($e.Previous))"
+            } elseif ($e.Kind -eq 'PowerSetting') {
+                # Se o plano foi apagado (ex.: "Desfazer" do plano Desempenho Máximo), não há o que voltar.
+                if (((powercfg /list) -join ' ') -notmatch $e.Scheme) {
+                    Write-Log "Plano $($e.Scheme) não existe mais; nada a reverter."
+                } else {
+                    Set-PowerSettingValue $e.Scheme $e.Sub $e.Setting ([int]$e.AC) ([int]$e.DC)
+                    Write-Log "Opção de energia $($e.Setting) restaurada no plano $($e.Scheme)"
+                }
             }
         } catch {
             Write-Log "Falha ao reverter $($e.Kind) $($e.Path)\$($e.Name): $($_.Exception.Message)" 'ERROR'

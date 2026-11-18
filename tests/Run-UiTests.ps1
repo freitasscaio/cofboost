@@ -51,6 +51,28 @@ Step 'Marcar todas / desmarcar / recomendadas' {
     Click 'BtnSelectNone'; Check (@($script:TweakRows.Values | Where-Object { $_.Check.IsChecked }).Count -eq 0) 'Desmarcar'
     Click 'BtnSelectRecommended'; Check (@($script:TweakRows.Values | Where-Object { $_.Check.IsChecked }).Count -eq @($script:Tweaks | Where-Object Default).Count) 'Marcar recomendadas'
 }
+Step 'Busca e filtro de categoria' {
+    $visible = { @($script:TweakRows.Values | Where-Object { $_.Card.Visibility -eq 'Visible' }).Count }
+    $script:UI.TweakSearch.Text = 'usb'
+    Check ((& $visible) -ge 1 -and (& $visible) -lt $script:Tweaks.Count) "busca 'usb' filtra a lista ($(& $visible) cartão(ões))"
+    $script:UI.TweakSearch.Text = 'LATENCIA'
+    Check ((& $visible) -ge 1) "busca ignora acento e maiúscula ($(& $visible) cartão(ões))"
+    $script:UI.TweakSearch.Text = 'xyz-nada'
+    Check ((& $visible) -eq 0 -and $script:UI.TweakEmpty.Visibility -eq 'Visible') 'busca sem resultado mostra aviso'
+    $script:UI.TweakSearch.Text = ''
+    $chip = $script:UI.CategoryBar.Children | Where-Object { $_.Tag -eq 'Rede' } | Select-Object -First 1
+    $chip.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
+    Check ((& $visible) -eq @($script:Tweaks | Where-Object Category -eq 'Rede').Count) 'filtro Rede mostra só a categoria'
+    $all = $script:UI.CategoryBar.Children[0]
+    $all.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
+    Check ((& $visible) -eq $script:Tweaks.Count) 'Todas volta a mostrar tudo'
+}
+Step 'Interruptor de um ajuste (simulação)' {
+    $sw = $script:TweakRows['usb-suspend'].Switch
+    $sw.IsChecked = -not $sw.IsChecked
+    $sw.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
+    Check ($script:UI.ContentHost.IsEnabled) 'interface volta a responder depois do interruptor'
+}
 Step 'Aplicar selecionadas (simulação)' { Click 'BtnSelectAll'; Click 'BtnApplySelected' }
 Step 'Reverter selecionadas (simulação)' { Click 'BtnRevertSelected'; Click 'BtnSelectRecommended' }
 Step 'Otimizar agora (simulação)' { Click 'BtnBoost'; Check ([bool]($script:Messages -match 'Otimização concluída')) 'mensagem de conclusão' }

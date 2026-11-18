@@ -7,7 +7,7 @@ Não precisa instalar nada além do que já vem no Windows 10/11 (PowerShell 5.1
 ## Recursos
 
 - **Otimizar agora (1 clique):** cria um ponto de restauração e aplica as otimizações recomendadas.
-- **25 otimizações** em 6 categorias (Sistema, Jogos, Latência e Input, Rede, Recursos do Windows, Serviços), cada uma com descrição, nível de risco e um indicador ATIVO/INATIVO.
+- **33 otimizações** em 6 categorias (Sistema, Jogos, Latência e Input, Rede, Recursos do Windows, Serviços), cada uma com descrição, nível de risco e um interruptor que liga ou desliga na hora. Dá para buscar pelo nome e filtrar por categoria.
 - **Limpeza:** arquivos temporários, cache de miniaturas, cache do Windows Update, Lixeira e cache DNS, um por um ou tudo de uma vez.
 - **Restauração:** cria e lista pontos de restauração do Windows e desfaz as otimizações do CofBoost.
 - **Configurações:** verificar atualizações ao abrir, criar ponto de restauração antes de otimizar, dados e registro.
@@ -64,6 +64,7 @@ O site baixa sempre de `releases/latest/download/CofBoost-Setup.exe`, então nã
 | Sistema | Win32PrioritySeparation (prioridade para a janela ativa) | ✔ |
 | Sistema | Bloquear apps em segundo plano | ✔ |
 | Sistema | Remover atraso de inicialização | ✔ |
+| Sistema | Desativar Inicialização Rápida | |
 | Sistema | Efeitos visuais para desempenho | |
 | Jogos | Desativar Game DVR | ✔ |
 | Jogos | Prioridade de jogos no MMCSS | ✔ |
@@ -71,12 +72,19 @@ O site baixa sempre de `releases/latest/download/CofBoost-Setup.exe`, então nã
 | Jogos | Desativar otimizações de tela cheia (global) | |
 | Latência e Input | Desativar aceleração do mouse | ✔ |
 | Latência e Input | Repetição de teclado mais rápida | |
+| Latência e Input | Desativar suspensão seletiva de USB | ✔ |
+| Latência e Input | Desativar economia de energia do PCI Express (ASPM) | ✔ |
+| Latência e Input | Desativar atalhos de Teclas de Aderência e Filtro | ✔ |
 | Rede | NetworkThrottlingIndex desativado | ✔ |
 | Rede | Desativar o algoritmo de Nagle | ✔ |
 | Recursos do Windows | Desativar Copilot | ✔ |
 | Recursos do Windows | Desativar Widgets | ✔ |
 | Recursos do Windows | Desativar Recall | ✔ |
 | Recursos do Windows | Desativar sobreposição da Xbox Game Bar | |
+| Recursos do Windows | Desativar dicas e sugestões do Windows | ✔ |
+| Recursos do Windows | Desativar ID de publicidade | ✔ |
+| Recursos do Windows | Não enviar atualizações para outros PCs | ✔ |
+| Recursos do Windows | Impedir o Edge de rodar em segundo plano | |
 | Recursos do Windows | Desativar isolamento de núcleo (risco alto) | |
 | Serviços | Desativar telemetria (DiagTrack) | ✔ |
 | Serviços | Desativar SysMain | |

@@ -116,9 +116,9 @@ function Show-Page {
         $active = $p -eq $Name
         $script:UI["Page$p"].Visibility = $(if ($active) { 'Visible' } else { 'Collapsed' })
         $btn = $script:UI["Nav$p"]
-        $btn.Background = New-Brush $(if ($active) { '#17203A' } else { '#00000000' })
+        $btn.Background = New-Brush $(if ($active) { '#1A22D3EE' } else { '#00000000' })
         $btn.Foreground = New-Brush $(if ($active) { '#FFFFFF' } else { '#9AA4BA' })
-        $btn.BorderBrush = New-Brush $(if ($active) { '#8B5CF6' } else { '#00000000' })   # indicador lateral
+        $btn.BorderBrush = New-Brush $(if ($active) { '#22D3EE' } else { '#00000000' })   # indicador lateral
     }
 }
 
@@ -145,8 +145,8 @@ function Set-Badge {
 
 function New-Card {
     $b = New-Object System.Windows.Controls.Border
-    $b.Background = New-Brush '#131A2B'
-    $b.BorderBrush = New-Brush '#1F2940'
+    $b.Background = $script:Window.FindResource('Panel')
+    $b.BorderBrush = $script:Window.FindResource('GlassEdge')
     $b.BorderThickness = New-Thickness 1 1 1 1
     $b.CornerRadius = New-Object System.Windows.CornerRadius(12)
     $b.Padding = New-Thickness 18 14 18 14
@@ -175,14 +175,91 @@ function New-RowGrid {
     $g
 }
 
+# Texto sem acento e em minúsculas, para a busca achar "latencia" em "Latência".
+function ConvertTo-SearchText {
+    param([string]$Text)
+    $d = $Text.ToLowerInvariant().Normalize([Text.NormalizationForm]::FormD)
+    -join ($d.ToCharArray() | Where-Object { [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne 'NonSpacingMark' })
+}
+
+# Mostra só os cartões que batem com a busca e a categoria escolhida.
+function Update-TweakFilter {
+    $q = ConvertTo-SearchText $script:UI.TweakSearch.Text.Trim()
+    $script:UI.TweakSearchHint.Visibility = $(if ($script:UI.TweakSearch.Text) { 'Collapsed' } else { 'Visible' })
+    $visibleByCat = @{}
+    foreach ($t in $script:Tweaks) {
+        $row = $script:TweakRows[$t.Id]
+        $show = ((-not $script:TweakCategory) -or $t.Category -eq $script:TweakCategory) -and ((-not $q) -or $row.Search.Contains($q))
+        $row.Card.Visibility = $(if ($show) { 'Visible' } else { 'Collapsed' })
+        if ($show) { $visibleByCat[$t.Category] = $true }
+    }
+    foreach ($cat in $script:CategoryHeaders.Keys) {
+        $script:CategoryHeaders[$cat].Visibility = $(if ($visibleByCat[$cat]) { 'Visible' } else { 'Collapsed' })
+    }
+    $script:UI.TweakEmpty.Visibility = $(if ($visibleByCat.Count) { 'Collapsed' } else { 'Visible' })
+    foreach ($chip in $script:UI.CategoryBar.Children) {
+        $active = "$($chip.Tag)" -eq "$($script:TweakCategory)"
+        $chip.Background = $(if ($active) { $script:Window.FindResource('NeonGradient') } else { New-Brush '#B80C1222' })
+        $chip.Foreground = New-Brush $(if ($active) { '#FFFFFF' } else { '#B4BDD0' })
+        $chip.BorderBrush = New-Brush $(if ($active) { '#22D3EE' } else { '#1E2B47' })
+    }
+}
+
+function Build-CategoryBar {
+    $bar = $script:UI.CategoryBar
+    $bar.Children.Clear()
+    $script:TweakCategory = ''
+    $cats = @('') + @($script:Tweaks | ForEach-Object { $_.Category } | Select-Object -Unique)
+    foreach ($cat in $cats) {
+        $count = @($script:Tweaks | Where-Object { -not $cat -or $_.Category -eq $cat }).Count
+        $b = New-Object System.Windows.Controls.Button
+        $b.Style = $script:Window.FindResource('ChipButton')
+        $b.Content = "$(if ($cat) { $cat } else { 'Todas' })  $count"
+        $b.Tag = $cat
+        $b.Add_Click({ $script:TweakCategory = "$($this.Tag)"; Update-TweakFilter })
+        [void]$bar.Children.Add($b)
+    }
+}
+
+# Interruptor do cartão: liga ou desliga só aquele ajuste, na hora.
+function Switch-Tweak {
+    param([string]$Id, [bool]$On)
+    $t = Get-Tweak $Id
+    if (-not $t) { return }
+    if ($On) {
+        Invoke-Busy "Aplicando: $($t.Name)" {
+            $reboot = Invoke-TweakList @($t)
+            if (-not (Test-DryRun) -and -not (Test-TweakApplied $t)) {
+                Show-Message "Não foi possível aplicar '$($t.Name)'. Veja os detalhes em Configurações > Abrir registro." 'Warning' | Out-Null
+            } elseif ($reboot) { Show-Message "'$($t.Name)' aplicado. Reinicie o PC para valer." | Out-Null }
+        }
+    } else {
+        Invoke-Busy "Revertendo: $($t.Name)" {
+            if (-not (Get-BackedUpIds | Where-Object { $_ -eq $t.Id })) {
+                Show-Message "'$($t.Name)' já estava assim antes do CofBoost, então não há valor original para voltar." | Out-Null
+                return
+            }
+            Undo-Tweak $t
+        }
+    }
+}
+
 function Build-TweakList {
     $panel = $script:UI.TweakList
     $panel.Children.Clear()
     $script:TweakRows = @{}
+    $script:CategoryHeaders = @{}
+    $empty = New-Text 'Nenhuma otimização encontrada para essa busca.' 13 '#8C97AE'
+    $empty.Margin = New-Thickness 2 18 0 0
+    $empty.Visibility = 'Collapsed'
+    $script:UI.TweakEmpty = $empty
+    [void]$panel.Children.Add($empty)
     $categories = $script:Tweaks | ForEach-Object { $_.Category } | Select-Object -Unique
     foreach ($cat in $categories) {
-        $header = New-Text $cat.ToUpper() 12 '#A78BFA' -Bold
+        $header = New-Text ('// ' + $cat.ToUpper()) 11 '#22D3EE'
+        $header.FontFamily = $script:Window.FindResource('Mono')
         $header.Margin = New-Thickness 2 14 0 8
+        $script:CategoryHeaders[$cat] = $header
         [void]$panel.Children.Add($header)
 
         foreach ($t in ($script:Tweaks | Where-Object { $_.Category -eq $cat })) {
@@ -201,30 +278,57 @@ function Build-TweakList {
             $tags = @("Risco: $($t.Risk)")
             if ($t.Default) { $tags += 'Recomendado' }
             if ($t.Reboot) { $tags += 'Requer reiniciar' }
-            $meta = New-Text ($tags -join '  ·  ') 11 '#A78BFA'
+            $meta = New-Text ($tags -join '  ·  ').ToUpper() 10.5 '#A78BFA'
+            $meta.FontFamily = $script:Window.FindResource('Mono')
             $meta.Margin = New-Thickness 0 2 0 4
             [void]$info.Children.Add($meta)
             [void]$info.Children.Add((New-Text $t.Description 12))
             [System.Windows.Controls.Grid]::SetColumn($info, 1)
 
-            $badge = New-Badge
-            $badge.Margin = New-Thickness 16 0 0 0
-            [System.Windows.Controls.Grid]::SetColumn($badge, 2)
+            # Interruptor: mostra se está ativo no PC e liga/desliga na hora.
+            $right = New-Object System.Windows.Controls.StackPanel
+            $right.VerticalAlignment = 'Center'
+            $right.Margin = New-Thickness 16 0 0 0
+            $sw = New-Object System.Windows.Controls.CheckBox
+            $sw.Style = $script:Window.FindResource('Toggle')
+            $sw.HorizontalAlignment = 'Center'
+            $sw.Tag = $t.Id
+            $sw.ToolTip = 'Ligar ou desligar agora'
+            $sw.Add_Click({ Switch-Tweak $this.Tag ([bool]$this.IsChecked) })
+            $state = New-Text '' 10 '#56627F'
+            $state.FontFamily = $script:Window.FindResource('Mono')
+            $state.HorizontalAlignment = 'Center'
+            $state.Margin = New-Thickness 0 5 0 0
+            [void]$right.Children.Add($sw)
+            [void]$right.Children.Add($state)
+            [System.Windows.Controls.Grid]::SetColumn($right, 2)
 
             [void]$grid.Children.Add($cb)
             [void]$grid.Children.Add($info)
-            [void]$grid.Children.Add($badge)
+            [void]$grid.Children.Add($right)
             $card.Child = $grid
 
-            # Clicar em qualquer lugar do cartão marca/desmarca.
+            # Clicar no cartão (fora do interruptor) marca/desmarca para aplicar em lote.
             $card.Cursor = 'Hand'
             $card.Tag = $cb
-            $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
+            # Brilho ciano na borda ao passar o mouse.
+            $card.Add_MouseEnter({ $this.BorderBrush = New-Brush '#8822D3EE' })
+            $card.Add_MouseLeave({ $this.BorderBrush = $script:Window.FindResource('GlassEdge') })
+            $card.Add_MouseLeftButtonUp({
+                param($s, $e)
+                $src = $e.OriginalSource
+                while ($src -and $src -isnot [System.Windows.Controls.CheckBox] -and $src -ne $s) { $src = [System.Windows.Media.VisualTreeHelper]::GetParent($src) }
+                if ($src -isnot [System.Windows.Controls.CheckBox]) { $this.Tag.IsChecked = -not $this.Tag.IsChecked }
+            })
 
             [void]$panel.Children.Add($card)
-            $script:TweakRows[$t.Id] = @{ Check = $cb; Badge = $badge }
+            $search = ConvertTo-SearchText "$($t.Name) $($t.Description) $($t.Category)"
+            $script:TweakRows[$t.Id] = @{ Check = $cb; Switch = $sw; State = $state; Card = $card; Search = $search }
         }
     }
+    Build-CategoryBar
+    $script:UI.TweakSearch.Add_TextChanged({ Update-TweakFilter })
+    Update-TweakFilter
 }
 
 function Update-State {
@@ -232,7 +336,10 @@ function Update-State {
     foreach ($t in $script:Tweaks) {
         $on = Test-TweakApplied $t
         if ($on) { $active++ }
-        Set-Badge $script:TweakRows[$t.Id].Badge $on
+        $row = $script:TweakRows[$t.Id]
+        $row.Switch.IsChecked = $on
+        $row.State.Text = $(if ($on) { 'ATIVO' } else { 'INATIVO' })
+        $row.State.Foreground = New-Brush $(if ($on) { '#34F5C5' } else { '#56627F' })
     }
     $total = $script:Tweaks.Count
     $pct = [int][math]::Round(100 * $active / [math]::Max($total, 1))
@@ -251,7 +358,7 @@ function Update-State {
 # Anel do Painel: arco de 0 a 360° a partir do topo, no sentido horário.
 function Set-ScoreArc {
     param([double]$Pct)
-    $c = 62; $r = 57
+    $c = 84; $r = 71
     if ($Pct -le 0) { $script:UI.ScoreArc.Data = $null; return }
     if ($Pct -ge 99.9) { $script:UI.ScoreArc.Data = New-Object System.Windows.Media.EllipseGeometry((New-Object System.Windows.Point($c, $c)), $r, $r); return }
     $a = $Pct / 100 * 2 * [math]::PI
@@ -460,7 +567,7 @@ function Start-RestorePointList {
             [void]$row.Children.Add($name); [void]$row.Children.Add($date)
             [void]$list.Children.Add($row)
             $line = New-Object System.Windows.Controls.Border
-            $line.Height = 1; $line.Background = New-Brush '#1F2940'
+            $line.Height = 1; $line.Background = New-Brush '#1E2B47'
             [void]$list.Children.Add($line)
         }
         $script:UI.StatRestore.Text = $points[0].Date.ToString('dd/MM/yyyy HH:mm')
@@ -611,6 +718,60 @@ function Start-SystemInfo {
     }
 }
 
+# ---------------------------------------------------------------- telemetria ao vivo
+# Uso de CPU e RAM pelas APIs do Windows (GetSystemTimes / GlobalMemoryStatusEx):
+# não depende do idioma do sistema e custa microssegundos. Só atualiza com o Painel
+# aberto e a janela visível, para não pesar enquanto você joga.
+function Start-Telemetry {
+    if (-not ('CofBoost.Telemetry' -as [type])) {
+        try {
+            Add-Type -Namespace CofBoost -Name Telemetry -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
+[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+struct MEMSTAT { public uint len; public uint load; public ulong a, b, c, d, e, f, g; }
+[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+static extern bool GlobalMemoryStatusEx(ref MEMSTAT m);
+static long lastIdle, lastTotal;
+public static int Cpu() {
+    long i, k, u; if (!GetSystemTimes(out i, out k, out u)) return -1;
+    long total = k + u, dt = total - lastTotal, di = i - lastIdle;
+    lastIdle = i; lastTotal = total;
+    if (dt <= 0) return -1;
+    return (int)System.Math.Round(100.0 * (dt - di) / dt);
+}
+public static int Ram() {
+    MEMSTAT m = new MEMSTAT(); m.len = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(MEMSTAT));
+    return GlobalMemoryStatusEx(ref m) ? (int)m.load : -1;
+}
+'@
+        } catch { Write-Log "Telemetria indisponível: $($_.Exception.Message)" 'WARN'; return }
+    }
+    [void][CofBoost.Telemetry]::Cpu()   # a primeira leitura só guarda a referência
+    $script:TelemetryTimer = New-Object System.Windows.Threading.DispatcherTimer
+    $script:TelemetryTimer.Interval = [TimeSpan]::FromMilliseconds(1500)
+    $script:TelemetryTimer.Add_Tick({ Update-Telemetry })
+    $script:TelemetryTimer.Start()
+}
+
+function Set-Meter {
+    param($Bar, $Text, [int]$Pct)
+    if ($Pct -lt 0) { return }
+    $Pct = [math]::Min(100, [math]::Max(0, $Pct))
+    $Text.Text = "$Pct%"
+    $track = $Bar.Parent
+    if ($track.ActualWidth -gt 0) { $Bar.Width = $track.ActualWidth * $Pct / 100 }
+}
+
+function Update-Telemetry {
+    if ($script:Window.WindowState -eq 'Minimized' -or $script:UI.PageHome.Visibility -ne 'Visible') {
+        [void][CofBoost.Telemetry]::Cpu(); return
+    }
+    Set-Meter $script:UI.CpuLoadBar $script:UI.CpuLoadText ([CofBoost.Telemetry]::Cpu())
+    Set-Meter $script:UI.RamLoadBar $script:UI.RamLoadText ([CofBoost.Telemetry]::Ram())
+    $script:UI.LiveDot.Opacity = $(if ($script:UI.LiveDot.Opacity -lt 1) { 1 } else { 0.35 })
+}
+
 function Start-App {
     [xml]$xml = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'MainWindow.xaml') -Raw -Encoding UTF8
     $script:Window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xml))
@@ -663,6 +824,9 @@ function Start-App {
     $script:UI.UpdateInfo.Text = "Versão instalada: $($script:AppVersion). Confere no GitHub se há uma mais nova."
     $script:UI.AboutVersion.Text = "CofBoost $($script:AppVersion)"
     if (Get-Setting 'CheckUpdates') { Start-UpdateCheck } else { $script:UI.StatUpdate.Text = 'Verificação desligada' }
+    # Liga a telemetria depois que a janela aparece, para não atrasar a abertura.
+    $script:Window.Add_ContentRendered({ Start-Telemetry })
+    $script:Window.Add_Closed({ if ($script:TelemetryTimer) { $script:TelemetryTimer.Stop() } })
 
     [void]$script:Window.ShowDialog()
 }
